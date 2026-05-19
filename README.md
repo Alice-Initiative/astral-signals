@@ -9,6 +9,8 @@ Astral Signals is a local-first "idea to full song" studio for Windows. It lets 
 
 ![Astral Signals UI](docs/astral-signals-ui.png)
 
+Studio screenshot: `docs/astral-signals-ui-studio-20260519.png`
+
 ## What Astral is for
 
 - Turn a short idea into a full custom song without leaving your machine
@@ -133,7 +135,8 @@ bootstrap_optional_engines.ps1   Optional repo/vendor sync
 bootstrap_songgeneration_backend.ps1
 bootstrap_heartmula_backend.ps1
 launch_astral_signals.ps1        Local launcher
-docs/astral-signals-ui.png       Repo screenshot
+docs/astral-signals-ui.png       Live Quickstart screenshot
+docs/astral-signals-ui-studio-20260519.png
 docs/discord-forum-post.md       Ready-to-share forum draft
 ```
 

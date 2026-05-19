@@ -23,17 +23,25 @@
       <div class="app-layout">
         <aside class="sidebar-nav">
           <div class="brand-card">
-            <p class="eyebrow">Astral Signals</p>
-            <h2>Song studio</h2>
-            <p>Private, local, cute-cosmic music creation.</p>
+            <div class="brand-mark" aria-hidden="true">
+              <div class="brand-planet"></div>
+              <div class="brand-ring"></div>
+              <div class="brand-star"></div>
+            </div>
+            <div class="brand-wordmark">
+              <p class="eyebrow">Astral</p>
+              <h2>Signals</h2>
+            </div>
+            <p>AI-powered song generation that stays private, local, and deeply customizable.</p>
           </div>
 
           <nav class="sidebar-links">
-            <a class="sidebar-link is-active" href="#createStudio">Create</a>
-            <a class="sidebar-link advanced-only" href="#aliceLab">Alice Lab</a>
-            <a class="sidebar-link" href="#outputDeck">Rendered Songs</a>
-            <a class="sidebar-link advanced-only" href="#stemStudio">Stem Studio</a>
-            <a class="sidebar-link advanced-only" href="#voiceLab">Voice Lab</a>
+            <a class="sidebar-link is-active" href="#createStudio"><span>Create</span></a>
+            <a class="sidebar-link quick-only" href="#quickstartFlow"><span>Explore</span></a>
+            <a class="sidebar-link" href="#outputDeck"><span>Library</span></a>
+            <a class="sidebar-link advanced-only" href="#aliceLab"><span>Alice Lab</span></a>
+            <a class="sidebar-link advanced-only" href="#stemStudio"><span>Stem Studio</span></a>
+            <a class="sidebar-link advanced-only" href="#voiceLab"><span>Voice Lab</span></a>
           </nav>
 
           <div class="sidebar-card">
@@ -54,18 +62,19 @@
 
         <div class="workspace">
           <section class="hero">
+            <div class="hero-utility">
+              <a class="link-chip" href="#quickstartFlow">How it works</a>
+            </div>
             <div class="hero-grid">
               <div class="hero-copy">
                 <p class="eyebrow">Astral Signals</p>
-                <h1>Turn ideas into songs with a local studio that can stay simple or go deep.</h1>
+                <h1>Turn ideas into <span>songs</span>.</h1>
                 <p class="lede">
-                  Ollama shapes the writing plan, ACE-Step handles full lyrical songs, MusicGen covers fast sketches, Voicebox previews cloned speech, and the heavy files stay on <code>S:</code>.
+                  AI-powered music generation, fully local and fully yours. Alice can stay lightweight in Quickstart or take full orchestration control in Studio.
                 </p>
                 <div class="hero-pills">
-                  <span>Quickstart presets</span>
-                  <span>Model picker</span>
-                  <span>Voice lock</span>
-                  <span>Stem rebuild</span>
+                  <span>Local model</span>
+                  <span>Processed locally</span>
                 </div>
               </div>
 
@@ -86,8 +95,8 @@
       <section class="panel" id="createStudio">
         <div class="panel-heading">
           <div>
-            <p class="section-tag">Signal Forge</p>
-            <h2>Build and save a full song</h2>
+            <p class="section-tag">Create</p>
+            <h2>Build a song your way</h2>
           </div>
           <div class="system" id="systemBadge">Detecting runtime...</div>
         </div>
@@ -125,12 +134,12 @@
             </div>
           </div>
 
-          <section class="quickstart-guide quick-only">
+          <section class="quickstart-guide quick-only" id="quickstartFlow">
             <div class="quickstart-guide-copy">
               <p class="section-tag">Quickstart Flow</p>
-              <h3>Just describe the song and let Astral handle the rest</h3>
+              <h3>Start simple, then go deeper only when you need to</h3>
               <p class="microcopy">
-                Quickstart keeps the creative path lightweight. Studio unlocks lyrics editing, Alice orchestration controls, Voice Lab, clone tools, and stem surgery.
+                Quickstart mirrors a guided song desk: describe the song, choose the feel, set the language and singer, then render. Studio unlocks the full lab.
               </p>
             </div>
             <div class="quickstart-guide-grid">
@@ -151,7 +160,7 @@
 
         <div class="forge-layout">
         <form id="generatorForm" class="form-grid forge-main">
-          <label class="field field-wide">
+          <label class="field field-wide quick-card quick-card-brief">
             <span>Core brief</span>
             <textarea
               id="prompt"
@@ -162,7 +171,7 @@
             ></textarea>
           </label>
 
-          <label class="field field-wide advanced-only">
+          <label class="field field-wide advanced-only quick-card quick-card-lyrics">
             <span>Lyrics</span>
             <textarea
               id="lyrics"
@@ -173,12 +182,12 @@
             <small class="field-note">Use section tags like [Verse], [Chorus], and [Bridge] when you have them.</small>
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-title">
             <span>Title</span>
             <input id="title" name="title" type="text" placeholder="Neon Relay" />
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-composer">
             <span>Astral composer</span>
             <select id="ai_model" name="ai_model">
               <option value="">Loading local composer models...</option>
@@ -186,7 +195,7 @@
             <small class="field-note" id="composerModelNote">Choose the local model that writes the song plan and lyrics.</small>
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-engine">
             <span>Song engine</span>
             <select id="song_model" name="song_model">
               <option value="ace-step::acestep-v15-turbo">Loading local song engines...</option>
@@ -194,7 +203,7 @@
             <small class="field-note">Choose the live render stack Astral should use for this pass.</small>
           </label>
 
-          <section class="engine-lab field-wide" id="engineLab">
+          <section class="engine-lab field-wide advanced-only" id="engineLab">
             <div class="subpanel-heading">
               <div>
                 <p class="section-tag">Engine Lab</p>
@@ -207,7 +216,7 @@
             </div>
           </section>
 
-          <label class="field">
+          <label class="field quick-card quick-card-vocal-mode">
             <span>Vocal mode</span>
             <select id="vocal_mode" name="vocal_mode">
               <option value="lyrics">Lyrical vocals</option>
@@ -216,7 +225,7 @@
             </select>
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-language">
             <span>Vocal language(s)</span>
             <input id="vocal_language" name="vocal_language" type="text" placeholder="en or ja + en" value="en" />
             <small class="field-note">Use a blend like <code>ja + en</code> or <code>es + en</code> for code-switched songs.</small>
@@ -226,17 +235,17 @@
           <input id="voice_clone_profile_name" name="voice_clone_profile_name" type="hidden" />
           <input id="voicebox_profile_name" name="voicebox_profile_name" type="hidden" />
 
-          <label class="field">
+          <label class="field quick-card quick-card-genre">
             <span>Genre</span>
             <input id="genre" name="genre" type="text" placeholder="cinematic alt-pop" />
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-mood">
             <span>Mood</span>
             <input id="mood" name="mood" type="text" placeholder="defiant, luminous, huge" />
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-instruments">
             <span>Instruments</span>
             <input
               id="instruments"
@@ -246,7 +255,7 @@
             />
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-tempo">
             <span>Tempo (BPM)</span>
             <input id="tempo_bpm" name="tempo_bpm" type="number" min="40" max="220" placeholder="112" />
           </label>
@@ -1038,13 +1047,13 @@
             </section>
           </section>
 
-          <label class="field">
+          <label class="field quick-card quick-card-duration">
             <span>Duration</span>
             <input id="duration" name="duration" type="range" min="10" max="240" value="60" />
             <strong id="durationValue">60s</strong>
           </label>
 
-          <label class="field">
+          <label class="field quick-card quick-card-candidates">
             <span>Candidates</span>
             <input id="candidates" name="candidates" type="range" min="1" max="2" value="1" />
             <strong id="candidatesValue">1</strong>
@@ -1066,7 +1075,7 @@
             <input id="seed" name="seed" type="number" min="1" max="2147483647" placeholder="Optional" />
           </label>
 
-          <div class="field toggle-field">
+          <div class="field toggle-field quick-card quick-card-ai">
             <span>Astral AI composer</span>
             <label class="toggle">
               <input id="use_ai" name="use_ai" type="checkbox" checked />
@@ -1090,7 +1099,7 @@
             </label>
           </div>
 
-          <div class="button-row field-wide">
+          <div class="button-row field-wide quick-card quick-card-actions">
             <button id="composeButton" type="button" class="button-secondary">Compose Song</button>
             <button id="compareButton" type="button" class="button-tertiary">Compare Engines</button>
             <button id="generateButton" type="submit">Generate Song</button>
@@ -1157,6 +1166,20 @@
             <h3>No songs rendered yet</h3>
             <p>Your full-song outputs will appear here with playback, output paths, and quick buttons for stem work.</p>
           </article>
+        </div>
+      </section>
+
+      <section class="transport-dock quick-only">
+        <div class="transport-now-playing">
+          <div class="transport-art" aria-hidden="true"></div>
+          <div>
+            <strong>Latest render will appear here</strong>
+            <p>Use Compare, Generate, and the Output Deck to review songs, stems, and exports.</p>
+          </div>
+        </div>
+        <div class="transport-actions">
+          <a class="button-tertiary" href="#stemStudio">Export Stems</a>
+          <a class="button-secondary" href="#outputDeck">Open Songs</a>
         </div>
       </section>
 
