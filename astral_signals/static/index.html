@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Astral Signals</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="starfield"></div>
+    <div class="sparkle-layer"></div>
+    <div class="nebula nebula-a"></div>
+    <div class="nebula nebula-b"></div>
+    <div class="nebula nebula-c"></div>
+    <div class="shooting-stars">
+      <span class="shooting-star star-a"></span>
+      <span class="shooting-star star-b"></span>
+      <span class="shooting-star star-c"></span>
+      <span class="shooting-star star-d"></span>
+    </div>
+
+    <main class="shell">
+      <div class="app-layout">
+        <aside class="sidebar-nav">
+          <div class="brand-card">
+            <p class="eyebrow">Astral Signals</p>
+            <h2>Song studio</h2>
+            <p>Private, local, cute-cosmic music creation.</p>
+          </div>
+
+          <nav class="sidebar-links">
+            <a class="sidebar-link is-active" href="#createStudio">Create</a>
+            <a class="sidebar-link advanced-only" href="#aliceLab">Alice Lab</a>
+            <a class="sidebar-link" href="#outputDeck">Rendered Songs</a>
+            <a class="sidebar-link advanced-only" href="#stemStudio">Stem Studio</a>
+            <a class="sidebar-link advanced-only" href="#voiceLab">Voice Lab</a>
+          </nav>
+
+          <div class="sidebar-card">
+            <p class="section-tag">Local Engine</p>
+            <h3>Runs on-device</h3>
+            <p>No cloud render queue. Drafts, outputs, clone anchors, and caches stay local by default.</p>
+          </div>
+
+          <div class="sidebar-card">
+            <p class="section-tag">Quick Notes</p>
+            <ul class="sidebar-list">
+              <li>Quickstart keeps the path simple.</li>
+              <li>Studio reveals routing, clone, and stem tools.</li>
+              <li>Installed models appear automatically.</li>
+            </ul>
+          </div>
+        </aside>
+
+        <div class="workspace">
+          <section class="hero">
+            <div class="hero-grid">
+              <div class="hero-copy">
+                <p class="eyebrow">Astral Signals</p>
+                <h1>Turn ideas into songs with a local studio that can stay simple or go deep.</h1>
+                <p class="lede">
+                  Ollama shapes the writing plan, ACE-Step handles full lyrical songs, MusicGen covers fast sketches, Voicebox previews cloned speech, and the heavy files stay on <code>S:</code>.
+                </p>
+                <div class="hero-pills">
+                  <span>Quickstart presets</span>
+                  <span>Model picker</span>
+                  <span>Voice lock</span>
+                  <span>Stem rebuild</span>
+                </div>
+              </div>
+
+              <div class="hero-visual">
+                <div class="hero-beam"></div>
+                <div class="hero-ring hero-ring-a"></div>
+                <div class="hero-ring hero-ring-b"></div>
+                <div class="hero-orb hero-orb-a"></div>
+                <div class="hero-orb hero-orb-b"></div>
+                <div class="hero-caption">
+                  <strong>Local AI engine</strong>
+                  <span>Compose, render, split, and save without leaving the machine.</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+      <section class="panel" id="createStudio">
+        <div class="panel-heading">
+          <div>
+            <p class="section-tag">Signal Forge</p>
+            <h2>Build and save a full song</h2>
+          </div>
+          <div class="system" id="systemBadge">Detecting runtime...</div>
+        </div>
+
+        <div class="draft-toolbar">
+          <label class="field">
+            <span>Draft name</span>
+            <input id="draftName" type="text" placeholder="Alice cosmic ballad v2" />
+          </label>
+
+          <label class="field">
+            <span>Saved drafts</span>
+            <select id="draftSelect">
+              <option value="">Select a saved draft</option>
+            </select>
+          </label>
+
+          <div class="draft-actions">
+            <button id="saveDraftButton" type="button" class="button-secondary">Save Draft</button>
+            <button id="newDraftButton" type="button" class="button-tertiary">New Slot</button>
+            <button id="deleteDraftButton" type="button" class="button-tertiary">Delete Draft</button>
+          </div>
+
+          <div class="autosave-pill" id="autosaveStatus">Autosave idle.</div>
+        </div>
+
+          <div class="experience-toolbar">
+            <div class="mode-switch" id="modeSwitch" aria-label="Interface mode">
+              <button type="button" class="mode-chip is-active" data-ui-mode="quick">Quickstart</button>
+              <button type="button" class="mode-chip" data-ui-mode="studio">Studio</button>
+            </div>
+
+            <div class="preset-rail" id="presetRail">
+              <span class="microcopy">Loading quick-start presets...</span>
+            </div>
+          </div>
+
+          <section class="quickstart-guide quick-only">
+            <div class="quickstart-guide-copy">
+              <p class="section-tag">Quickstart Flow</p>
+              <h3>Just describe the song and let Astral handle the rest</h3>
+              <p class="microcopy">
+                Quickstart keeps the creative path lightweight. Studio unlocks lyrics editing, Alice orchestration controls, Voice Lab, clone tools, and stem surgery.
+              </p>
+            </div>
+            <div class="quickstart-guide-grid">
+              <article class="quickstart-card">
+                <strong>1. Start with the idea</strong>
+                <p>Pick a preset or write the core brief, then choose genre, mood, language, and duration.</p>
+              </article>
+              <article class="quickstart-card">
+                <strong>2. Let Astral draft</strong>
+                <p>Ollama writes the plan, then you can stay on ACE-Step for full songs or switch to MusicGen for faster instrumental or wordless passes.</p>
+              </article>
+              <article class="quickstart-card">
+                <strong>3. Go deeper only if needed</strong>
+                <p>Switch to Studio when you want manual lyrics, multi-singer routing, Alice Lab, Voicebox cues, or stem editing.</p>
+              </article>
+            </div>
+          </section>
+
+        <div class="forge-layout">
+        <form id="generatorForm" class="form-grid forge-main">
+          <label class="field field-wide">
+            <span>Core brief</span>
+            <textarea
+              id="prompt"
+              name="prompt"
+              rows="5"
+              placeholder="A cotton-candy cosmic anthem where Alice guides a lost traveler through star trails and memory fragments"
+              required
+            ></textarea>
+          </label>
+
+          <label class="field field-wide advanced-only">
+            <span>Lyrics</span>
+            <textarea
+              id="lyrics"
+              name="lyrics"
+              rows="8"
+              placeholder="[Verse]&#10;If you already have lyrics, drop them here. Leave blank and Astral AI can draft them."
+            ></textarea>
+            <small class="field-note">Use section tags like [Verse], [Chorus], and [Bridge] when you have them.</small>
+          </label>
+
+          <label class="field">
+            <span>Title</span>
+            <input id="title" name="title" type="text" placeholder="Neon Relay" />
+          </label>
+
+          <label class="field">
+            <span>Astral composer</span>
+            <select id="ai_model" name="ai_model">
+              <option value="">Loading local composer models...</option>
+            </select>
+            <small class="field-note" id="composerModelNote">Choose the local model that writes the song plan and lyrics.</small>
+          </label>
+
+          <label class="field">
+            <span>Song engine</span>
+            <select id="song_model" name="song_model">
+              <option value="ace-step::acestep-v15-turbo">Loading local song engines...</option>
+            </select>
+            <small class="field-note">Choose the live render stack Astral should use for this pass.</small>
+          </label>
+
+          <section class="engine-lab field-wide" id="engineLab">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Engine Lab</p>
+                <h3>Song engines and specialist music tools</h3>
+              </div>
+              <div class="voice-preview-meta" id="engineLabMeta">Astral can surface live render backends plus optional local labs for stems, orchestration, and singer identity work.</div>
+            </div>
+            <div class="engine-card-grid" id="engineCatalog">
+              <p class="microcopy">Loading local engine catalog...</p>
+            </div>
+          </section>
+
+          <label class="field">
+            <span>Vocal mode</span>
+            <select id="vocal_mode" name="vocal_mode">
+              <option value="lyrics">Lyrical vocals</option>
+              <option value="instrumental">Instrumental</option>
+              <option value="wordless">Wordless vocals</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Vocal language(s)</span>
+            <input id="vocal_language" name="vocal_language" type="text" placeholder="en or ja + en" value="en" />
+            <small class="field-note">Use a blend like <code>ja + en</code> or <code>es + en</code> for code-switched songs.</small>
+          </label>
+
+          <input id="voice_description" name="voice_description" type="hidden" />
+          <input id="voice_clone_profile_name" name="voice_clone_profile_name" type="hidden" />
+          <input id="voicebox_profile_name" name="voicebox_profile_name" type="hidden" />
+
+          <label class="field">
+            <span>Genre</span>
+            <input id="genre" name="genre" type="text" placeholder="cinematic alt-pop" />
+          </label>
+
+          <label class="field">
+            <span>Mood</span>
+            <input id="mood" name="mood" type="text" placeholder="defiant, luminous, huge" />
+          </label>
+
+          <label class="field">
+            <span>Instruments</span>
+            <input
+              id="instruments"
+              name="instruments"
+              type="text"
+              placeholder="synth bass, live drums, wide guitars, stadium toms"
+            />
+          </label>
+
+          <label class="field">
+            <span>Tempo (BPM)</span>
+            <input id="tempo_bpm" name="tempo_bpm" type="number" min="40" max="220" placeholder="112" />
+          </label>
+
+          <label class="field advanced-only">
+            <span>Key</span>
+            <input id="key_scale" name="key_scale" type="text" placeholder="D minor" />
+          </label>
+
+          <label class="field advanced-only">
+            <span>Time signature</span>
+            <input id="time_signature" name="time_signature" type="text" placeholder="4/4" />
+          </label>
+
+          <label class="field advanced-only">
+            <span>Era influence</span>
+            <input id="era" name="era" type="text" placeholder="2010s arena pop with modern trailer sheen" />
+          </label>
+
+          <label class="field advanced-only">
+            <span>Texture</span>
+            <input id="texture" name="texture" type="text" placeholder="wide, glossy, rising, high-impact" />
+          </label>
+
+          <section class="alice-lab field-wide advanced-only" id="aliceLab">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Alice Lab</p>
+                <h3>Let Alice orchestrate and use Voicebox</h3>
+              </div>
+              <div class="voice-preview-meta" id="aliceLabMeta">Alice can stay gentle or take full arrangement control.</div>
+            </div>
+
+            <div class="field-row">
+              <div class="field toggle-field">
+                <span>Alice co-producer</span>
+                <label class="toggle">
+                  <input id="alice_enabled" name="alice_enabled" type="checkbox" />
+                  <span>Give Alice permission to make stronger hook, structure, and orchestration choices instead of just filling gaps.</span>
+                </label>
+              </div>
+
+              <label class="field slider-field">
+                <span>Alice autonomy</span>
+                <input id="alice_autonomy" name="alice_autonomy" type="range" min="0" max="100" value="72" />
+                <strong id="aliceAutonomyValue">72</strong>
+              </label>
+            </div>
+
+            <div class="preset-rail" id="aliceProfileRail">
+              <span class="microcopy">Loading Alice producer modes...</span>
+            </div>
+
+            <div class="voice-grid">
+              <label class="field field-wide">
+                <span>Alice mission</span>
+                <textarea
+                  id="alice_goal"
+                  name="alice_goal"
+                  rows="2"
+                  placeholder="Let Alice build an emotional star-travel arc that starts intimate, blooms huge, and lands with a memorable cosmic hook."
+                ></textarea>
+                <small class="field-note">Describe the artistic outcome you want Alice to chase, not the exact implementation.</small>
+              </label>
+
+              <label class="field advanced-only">
+                <span>Hook direction</span>
+                <input id="hook_direction" name="hook_direction" type="text" placeholder="anthemic chorus, instantly memorable, lift on the last word" />
+              </label>
+
+              <label class="field advanced-only">
+                <span>Chord story</span>
+                <input id="chord_story" name="chord_story" type="text" placeholder="wistful minor verses that bloom into a major-feeling chorus" />
+              </label>
+
+              <label class="field advanced-only">
+                <span>Dynamic arc</span>
+                <input id="dynamic_arc" name="dynamic_arc" type="text" placeholder="quiet orbit, rising mid-section, radiant final lift" />
+              </label>
+
+              <label class="field advanced-only">
+                <span>Section energy map</span>
+                <input id="section_energy_map" name="section_energy_map" type="text" placeholder="Verse 1 intimate, Pre big inhale, Chorus huge, Bridge suspended, Final chorus maximal" />
+              </label>
+
+              <label class="field field-wide advanced-only">
+                <span>Orchestration focus</span>
+                <textarea
+                  id="orchestration_plan"
+                  name="orchestration_plan"
+                  rows="3"
+                  placeholder="Give Alice room to choose countermelodies, layer synths against harp and strings, and introduce bigger low-end motion in the second chorus."
+                ></textarea>
+              </label>
+
+              <label class="field field-wide advanced-only">
+                <span>Transition notes</span>
+                <textarea
+                  id="transition_notes"
+                  name="transition_notes"
+                  rows="2"
+                  placeholder="Use soft signal-noise swells into each chorus, brief silence before the bridge, and a glowing vocal stack into the outro."
+                ></textarea>
+              </label>
+            </div>
+
+            <section class="preview-booth alice-voicebox-lab">
+              <div class="subpanel-heading">
+                <div>
+                  <p class="section-tag">Alice Voicebox</p>
+                  <h3>Give Alice a spoken intro, interlude, or outro</h3>
+                </div>
+                <div class="voice-preview-meta" id="voiceboxProfileMeta">Choose a clone profile for spoken cues.</div>
+              </div>
+
+              <div class="field-row">
+                <div class="field toggle-field">
+                  <span>Use Voicebox cue</span>
+                  <label class="toggle">
+                    <input id="voicebox_enabled" name="voicebox_enabled" type="checkbox" />
+                    <span>Let Alice place a cloned spoken moment around the song for intros, interludes, narration, or endings.</span>
+                  </label>
+                </div>
+
+                <div class="field toggle-field">
+                  <span>Auto-write cue</span>
+                  <label class="toggle">
+                    <input id="voicebox_auto_script" name="voicebox_auto_script" type="checkbox" checked />
+                    <span>If this stays on, Alice writes the spoken line from the song plan when you preview it.</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="voice-grid">
+                <label class="field">
+                  <span>Voicebox profile</span>
+                  <select id="voicebox_profile_id" name="voicebox_profile_id">
+                    <option value="">Use selected singer clone if available</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Spoken role</span>
+                  <select id="voicebox_role" name="voicebox_role">
+                    <option value="">Optional</option>
+                    <option value="spoken intro">Spoken intro</option>
+                    <option value="pre-chorus whisper">Pre-chorus whisper</option>
+                    <option value="bridge interlude">Bridge interlude</option>
+                    <option value="outro signoff">Outro signoff</option>
+                  </select>
+                </label>
+
+                <label class="field advanced-only">
+                  <span>Spoken language</span>
+                  <input id="voicebox_language" name="voicebox_language" type="text" placeholder="Leave blank to follow the main song language" />
+                </label>
+
+                <label class="field field-wide advanced-only">
+                  <span>Voicebox cue text</span>
+                  <textarea
+                    id="voicebox_text"
+                    name="voicebox_text"
+                    rows="2"
+                    placeholder="Optional manual cue. If blank and auto-write is on, Alice will write a spoken line from the current song plan."
+                  ></textarea>
+                </label>
+              </div>
+
+              <div class="button-row field-wide">
+                <button id="previewAliceVoiceboxButton" type="button" class="button-secondary">Preview Alice Voicebox Cue</button>
+                <p class="microcopy">
+                  This makes a real local Voicebox speech preview with the selected clone, so Alice can audition narration before you bake the full song flow.
+                </p>
+              </div>
+
+              <div id="aliceLabResults" class="mini-results">
+                <article class="empty-state compact">
+                  <h3>No Alice lab preview yet</h3>
+                  <p>Compose the song or preview a spoken cue here when you want Alice to help orchestrate the emotional flow.</p>
+                </article>
+              </div>
+            </section>
+          </section>
+
+          <section class="voice-lab field-wide advanced-only" id="voiceLab">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Voice Lab</p>
+                <h3>Shape the singer precisely</h3>
+              </div>
+              <div class="voice-preview" id="voicePreview">Voice preview will appear here.</div>
+            </div>
+
+            <div class="voice-routing-grid">
+              <label class="field">
+                <span>Singer setup</span>
+                <select id="singer_mode" name="singer_mode">
+                  <option value="single" selected>Single locked singer</option>
+                  <option value="multiple">Multiple singers</option>
+                </select>
+                <small class="field-note">Default behavior keeps one singer stable across every language.</small>
+              </label>
+
+              <label class="field">
+                <span>Singer routing</span>
+                <select id="singer_assignment_mode" name="singer_assignment_mode">
+                  <option value="lock_primary" selected>Lock primary singer</option>
+                  <option value="manual_by_language">Manual by language</option>
+                  <option value="composer_by_language">Composer assigns</option>
+                </select>
+                <small class="field-note">Switch this only when you want multilingual songs to split voices intentionally.</small>
+              </label>
+
+              <label class="field">
+                <span>Voice Booth target</span>
+                <select id="preview_singer_id" name="preview_singer_id">
+                  <option value="primary">Primary Singer</option>
+                </select>
+                <small class="field-note">Choose which singer the quick preview should audition.</small>
+              </label>
+
+              <label class="field">
+                <span>Primary singer name</span>
+                <input id="primary_singer_name" name="primary_singer_name" type="text" placeholder="Alice Lead" value="Primary Singer" />
+              </label>
+
+              <label class="field">
+                <span>Primary role</span>
+                <input id="primary_singer_role" name="primary_singer_role" type="text" placeholder="lead, narrator, duet anchor" value="lead" />
+              </label>
+
+              <label class="field">
+                <span>Primary language coverage</span>
+                <input id="primary_singer_languages" name="primary_singer_languages" type="text" placeholder="Optional: ja + en" />
+              </label>
+
+              <div class="field toggle-field voice-routing-toggle">
+                <span>Primary can sing all languages</span>
+                <label class="toggle">
+                  <input id="primary_singer_all_languages" name="primary_singer_all_languages" type="checkbox" checked />
+                  <span>Keep this on when the same singer should hold the song together even if the lyrics switch languages.</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="voice-grid">
+              <label class="field">
+                <span>Preset</span>
+                <select id="voice_preset" name="voice_preset">
+                  <option value="">Neutral</option>
+                  <option value="Luna Bloom" selected>Luna Bloom</option>
+                  <option value="Nova Petal">Nova Petal</option>
+                  <option value="Starlace">Starlace</option>
+                  <option value="Velvet Meteor">Velvet Meteor</option>
+                  <option value="Silver Cherub">Silver Cherub</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Lead shape</span>
+                <select id="voice_gender" name="voice_gender">
+                  <option value="">Open</option>
+                  <option value="feminine" selected>Feminine</option>
+                  <option value="androgynous">Androgynous</option>
+                  <option value="masculine">Masculine</option>
+                  <option value="duet">Duet</option>
+                  <option value="choir lead">Choir lead</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Tone</span>
+                <select id="voice_tone" name="voice_tone">
+                  <option value="">Open</option>
+                  <option value="airy" selected>Airy</option>
+                  <option value="smoky">Smoky</option>
+                  <option value="glassy">Glassy</option>
+                  <option value="velvet">Velvet</option>
+                  <option value="childlike">Childlike</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Register</span>
+                <select id="voice_register" name="voice_register">
+                  <option value="">Open</option>
+                  <option value="alto">Alto</option>
+                  <option value="mezzo-soprano" selected>Mezzo-soprano</option>
+                  <option value="soprano">Soprano</option>
+                  <option value="tenor">Tenor</option>
+                  <option value="baritone">Baritone</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Harmonies</span>
+                <select id="harmony_style" name="harmony_style">
+                  <option value="">Minimal</option>
+                  <option value="soft doubles">Soft doubles</option>
+                  <option value="stacked angelic" selected>Stacked angelic</option>
+                  <option value="call-and-response">Call and response</option>
+                  <option value="huge choir bloom">Huge choir bloom</option>
+                </select>
+              </label>
+
+              <label class="field field-wide">
+                <span>Voice notes</span>
+                <textarea
+                  id="voice_notes"
+                  name="voice_notes"
+                  rows="3"
+                  placeholder="Optional extra direction like 'gently smiling delivery, fragile in the verse, radiant in the chorus'"
+                ></textarea>
+                <small class="field-note">These settings shape the local singing prompt; they are not a voice clone.</small>
+              </label>
+
+              <label class="field slider-field">
+                <span>Breathiness</span>
+                <input id="breathiness" name="breathiness" type="range" min="0" max="100" value="62" />
+                <strong id="breathinessValue">62</strong>
+              </label>
+
+              <label class="field slider-field">
+                <span>Brightness</span>
+                <input id="brightness" name="brightness" type="range" min="0" max="100" value="74" />
+                <strong id="brightnessValue">74</strong>
+              </label>
+
+              <label class="field slider-field">
+                <span>Power</span>
+                <input id="vocal_power" name="vocal_power" type="range" min="0" max="100" value="52" />
+                <strong id="vocalPowerValue">52</strong>
+              </label>
+
+              <label class="field slider-field">
+                <span>Vibrato</span>
+                <input id="vibrato" name="vibrato" type="range" min="0" max="100" value="42" />
+                <strong id="vibratoValue">42</strong>
+              </label>
+
+              <label class="field slider-field">
+                <span>Intimacy</span>
+                <input id="intimacy" name="intimacy" type="range" min="0" max="100" value="72" />
+                <strong id="intimacyValue">72</strong>
+              </label>
+            </div>
+
+            <section id="multiSingerLab" class="multi-singer-lab hidden advanced-only">
+              <div class="subpanel-heading">
+                <div>
+                  <p class="section-tag">Singer Routing</p>
+                  <h3>Add more singers and map them to languages</h3>
+                </div>
+                <div class="voice-preview-meta">Manual maps or composer-led casting</div>
+              </div>
+
+              <div class="multi-singer-grid">
+                <article class="singer-card">
+                  <div class="subpanel-heading">
+                    <div>
+                      <p class="section-tag">Singer B</p>
+                      <h3>Second singer</h3>
+                    </div>
+                  </div>
+
+                  <div class="field-row">
+                    <div class="field toggle-field singer-enable">
+                      <span>Enable singer B</span>
+                      <label class="toggle">
+                        <input id="singer_b_enabled" type="checkbox" />
+                        <span>Include this singer in the routing pool.</span>
+                      </label>
+                    </div>
+
+                    <div class="field toggle-field singer-enable">
+                      <span>Singer B can sing all languages</span>
+                      <label class="toggle">
+                        <input id="singer_b_all_languages" type="checkbox" />
+                        <span>Use this when Singer B should be available for every language instead of a limited map.</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="voice-grid">
+                    <label class="field">
+                      <span>Name</span>
+                      <input id="singer_b_name" type="text" placeholder="Nova Echo" />
+                    </label>
+
+                    <label class="field">
+                      <span>Role</span>
+                      <input id="singer_b_role" type="text" placeholder="counterline, duet partner, chorus lift" />
+                    </label>
+
+                    <label class="field">
+                      <span>Language coverage</span>
+                      <input id="singer_b_languages" type="text" placeholder="en + ru" />
+                    </label>
+
+                    <label class="field">
+                      <span>Clone reference name</span>
+                      <input id="singer_b_clone_profile_name" type="text" placeholder="Optional clone profile label" />
+                    </label>
+
+                    <label class="field">
+                      <span>Preset</span>
+                      <select id="singer_b_voice_preset">
+                        <option value="">Neutral</option>
+                        <option value="Luna Bloom">Luna Bloom</option>
+                        <option value="Nova Petal" selected>Nova Petal</option>
+                        <option value="Starlace">Starlace</option>
+                        <option value="Velvet Meteor">Velvet Meteor</option>
+                        <option value="Silver Cherub">Silver Cherub</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Lead shape</span>
+                      <select id="singer_b_voice_gender">
+                        <option value="">Open</option>
+                        <option value="feminine" selected>Feminine</option>
+                        <option value="androgynous">Androgynous</option>
+                        <option value="masculine">Masculine</option>
+                        <option value="duet">Duet</option>
+                        <option value="choir lead">Choir lead</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Tone</span>
+                      <select id="singer_b_voice_tone">
+                        <option value="">Open</option>
+                        <option value="airy" selected>Airy</option>
+                        <option value="smoky">Smoky</option>
+                        <option value="glassy">Glassy</option>
+                        <option value="velvet">Velvet</option>
+                        <option value="childlike">Childlike</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Register</span>
+                      <select id="singer_b_voice_register">
+                        <option value="">Open</option>
+                        <option value="alto" selected>Alto</option>
+                        <option value="mezzo-soprano">Mezzo-soprano</option>
+                        <option value="soprano">Soprano</option>
+                        <option value="tenor">Tenor</option>
+                        <option value="baritone">Baritone</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Harmonies</span>
+                      <select id="singer_b_harmony_style">
+                        <option value="">Minimal</option>
+                        <option value="soft doubles" selected>Soft doubles</option>
+                        <option value="stacked angelic">Stacked angelic</option>
+                        <option value="call-and-response">Call and response</option>
+                        <option value="huge choir bloom">Huge choir bloom</option>
+                      </select>
+                    </label>
+
+                    <label class="field field-wide">
+                      <span>Voice notes</span>
+                      <textarea id="singer_b_voice_notes" rows="2" placeholder="Optional extra direction for Singer B"></textarea>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Breathiness</span>
+                      <input id="singer_b_breathiness" type="range" min="0" max="100" value="58" />
+                      <strong id="singerBBreathinessValue">58</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Brightness</span>
+                      <input id="singer_b_brightness" type="range" min="0" max="100" value="67" />
+                      <strong id="singerBBrightnessValue">67</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Power</span>
+                      <input id="singer_b_vocal_power" type="range" min="0" max="100" value="48" />
+                      <strong id="singerBVocalPowerValue">48</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Vibrato</span>
+                      <input id="singer_b_vibrato" type="range" min="0" max="100" value="34" />
+                      <strong id="singerBVibratoValue">34</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Intimacy</span>
+                      <input id="singer_b_intimacy" type="range" min="0" max="100" value="60" />
+                      <strong id="singerBIntimacyValue">60</strong>
+                    </label>
+                  </div>
+                </article>
+
+                <article class="singer-card">
+                  <div class="subpanel-heading">
+                    <div>
+                      <p class="section-tag">Singer C</p>
+                      <h3>Third singer</h3>
+                    </div>
+                  </div>
+
+                  <div class="field-row">
+                    <div class="field toggle-field singer-enable">
+                      <span>Enable singer C</span>
+                      <label class="toggle">
+                        <input id="singer_c_enabled" type="checkbox" />
+                        <span>Include this singer in the routing pool.</span>
+                      </label>
+                    </div>
+
+                    <div class="field toggle-field singer-enable">
+                      <span>Singer C can sing all languages</span>
+                      <label class="toggle">
+                        <input id="singer_c_all_languages" type="checkbox" />
+                        <span>Use this when Singer C should be available for every language instead of a limited map.</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="voice-grid">
+                    <label class="field">
+                      <span>Name</span>
+                      <input id="singer_c_name" type="text" placeholder="Velvet Orbit" />
+                    </label>
+
+                    <label class="field">
+                      <span>Role</span>
+                      <input id="singer_c_role" type="text" placeholder="bridge contrast, low harmony, answer voice" />
+                    </label>
+
+                    <label class="field">
+                      <span>Language coverage</span>
+                      <input id="singer_c_languages" type="text" placeholder="ja + ko" />
+                    </label>
+
+                    <label class="field">
+                      <span>Clone reference name</span>
+                      <input id="singer_c_clone_profile_name" type="text" placeholder="Optional clone profile label" />
+                    </label>
+
+                    <label class="field">
+                      <span>Preset</span>
+                      <select id="singer_c_voice_preset">
+                        <option value="">Neutral</option>
+                        <option value="Luna Bloom">Luna Bloom</option>
+                        <option value="Nova Petal">Nova Petal</option>
+                        <option value="Starlace" selected>Starlace</option>
+                        <option value="Velvet Meteor">Velvet Meteor</option>
+                        <option value="Silver Cherub">Silver Cherub</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Lead shape</span>
+                      <select id="singer_c_voice_gender">
+                        <option value="">Open</option>
+                        <option value="feminine">Feminine</option>
+                        <option value="androgynous" selected>Androgynous</option>
+                        <option value="masculine">Masculine</option>
+                        <option value="duet">Duet</option>
+                        <option value="choir lead">Choir lead</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Tone</span>
+                      <select id="singer_c_voice_tone">
+                        <option value="">Open</option>
+                        <option value="airy">Airy</option>
+                        <option value="smoky" selected>Smoky</option>
+                        <option value="glassy">Glassy</option>
+                        <option value="velvet">Velvet</option>
+                        <option value="childlike">Childlike</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Register</span>
+                      <select id="singer_c_voice_register">
+                        <option value="">Open</option>
+                        <option value="alto">Alto</option>
+                        <option value="mezzo-soprano" selected>Mezzo-soprano</option>
+                        <option value="soprano">Soprano</option>
+                        <option value="tenor">Tenor</option>
+                        <option value="baritone">Baritone</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Harmonies</span>
+                      <select id="singer_c_harmony_style">
+                        <option value="">Minimal</option>
+                        <option value="soft doubles">Soft doubles</option>
+                        <option value="stacked angelic" selected>Stacked angelic</option>
+                        <option value="call-and-response">Call and response</option>
+                        <option value="huge choir bloom">Huge choir bloom</option>
+                      </select>
+                    </label>
+
+                    <label class="field field-wide">
+                      <span>Voice notes</span>
+                      <textarea id="singer_c_voice_notes" rows="2" placeholder="Optional extra direction for Singer C"></textarea>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Breathiness</span>
+                      <input id="singer_c_breathiness" type="range" min="0" max="100" value="55" />
+                      <strong id="singerCBreathinessValue">55</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Brightness</span>
+                      <input id="singer_c_brightness" type="range" min="0" max="100" value="62" />
+                      <strong id="singerCBrightnessValue">62</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Power</span>
+                      <input id="singer_c_vocal_power" type="range" min="0" max="100" value="54" />
+                      <strong id="singerCVocalPowerValue">54</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Vibrato</span>
+                      <input id="singer_c_vibrato" type="range" min="0" max="100" value="40" />
+                      <strong id="singerCVibratoValue">40</strong>
+                    </label>
+
+                    <label class="field slider-field">
+                      <span>Intimacy</span>
+                      <input id="singer_c_intimacy" type="range" min="0" max="100" value="58" />
+                      <strong id="singerCIntimacyValue">58</strong>
+                    </label>
+                  </div>
+                </article>
+              </div>
+
+              <p class="microcopy">
+                Manual routing locks singers to the language coverage you define. Composer routing lets Astral decide which configured singer should carry each language or section while keeping identities stable once chosen.
+              </p>
+            </section>
+
+            <section class="preview-booth advanced-only" id="cloneStudio">
+              <div class="subpanel-heading">
+                <div>
+                  <p class="section-tag">Voice Booth</p>
+                  <h3>Test the singer before a full render</h3>
+                </div>
+                <div class="voice-preview-meta">Fast local vocal spotlight</div>
+              </div>
+
+              <div class="field-row">
+                <label class="field field-wide">
+                  <span>Preview line</span>
+                  <textarea
+                    id="preview_text"
+                    name="preview_text"
+                    rows="2"
+                    placeholder="I remember, I connect, I guide"
+                  ></textarea>
+                  <small class="field-note">Leave this blank to use your first lyric line or a default Astral test phrase.</small>
+                </label>
+
+                <label class="field slider-field preview-duration-field">
+                  <span>Preview seconds</span>
+                  <input id="preview_duration" name="preview_duration" type="range" min="10" max="20" value="12" />
+                  <strong id="previewDurationValue">12s</strong>
+                </label>
+              </div>
+
+              <div class="button-row field-wide">
+                <button id="previewVoiceButton" type="button" class="button-secondary">Preview Voice</button>
+                <button id="fillPreviewLyricButton" type="button" class="button-tertiary">Use First Lyric Line</button>
+                <p class="microcopy">
+                  This uses the current Voice Lab settings and makes a short vocal-forward clip so you can hear the lead before committing to a full song.
+                </p>
+              </div>
+
+              <div id="voicePreviewResults" class="mini-results">
+                <article class="empty-state compact">
+                  <h3>No voice preview yet</h3>
+                  <p>Astral will render a short singer test clip here with the current voice settings.</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="preview-booth">
+              <div class="subpanel-heading">
+                <div>
+                  <p class="section-tag">Voice Clone Studio</p>
+                  <h3>Build and test a real cloned voice</h3>
+                </div>
+                <div class="voice-preview-meta" id="cloneProfileMeta">No clone profile selected yet.</div>
+              </div>
+
+              <div class="field-row">
+                <label class="field">
+                  <span>Clone profile</span>
+                  <select id="voice_clone_profile_id" name="voice_clone_profile_id">
+                    <option value="">Select a cloned voice</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Clone engine</span>
+                  <select id="clone_profile_engine" name="clone_profile_engine">
+                    <option value="">Auto</option>
+                    <option value="chatterbox_turbo">Chatterbox Turbo</option>
+                    <option value="chatterbox">Chatterbox</option>
+                    <option value="qwen">Qwen</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label class="field">
+                  <span>New profile name</span>
+                  <input id="clone_profile_name" type="text" placeholder="Alice Clone" />
+                </label>
+
+                <label class="field">
+                  <span>Clone language</span>
+                  <input id="clone_profile_language" type="text" placeholder="en" value="en" />
+                </label>
+              </div>
+
+              <label class="field field-wide">
+                <span>Profile description</span>
+                <input
+                  id="clone_profile_description"
+                  type="text"
+                  placeholder="Soft luminous narrator, calm and intimate"
+                />
+              </label>
+
+              <label class="field field-wide">
+                <span>Reference audio path</span>
+                <input
+                  id="clone_sample_audio_path"
+                  type="text"
+                  placeholder="S:\AstralSignals\references\alice-spoken-sample.wav"
+                />
+                <small class="field-note">Use a local spoken reference clip for the clone. You can add more samples later.</small>
+              </label>
+
+              <label class="field field-wide">
+                <span>Reference transcript</span>
+                <textarea
+                  id="clone_reference_text"
+                  rows="3"
+                  placeholder="Paste the exact words spoken in the reference clip."
+                ></textarea>
+              </label>
+
+              <label class="field field-wide">
+                <span>Clone preview line</span>
+                <textarea
+                  id="clone_preview_text"
+                  rows="2"
+                  placeholder="I remember, I connect, I guide."
+                ></textarea>
+                <small class="field-note">This makes a real Voicebox speech preview with the selected clone profile.</small>
+              </label>
+
+              <div class="button-row field-wide">
+                <button id="refreshCloneProfilesButton" type="button" class="button-tertiary">Refresh Clones</button>
+                <button id="createCloneProfileButton" type="button" class="button-secondary">Create Clone Profile</button>
+                <button id="addCloneSampleButton" type="button" class="button-tertiary">Add Sample To Selected</button>
+                <button id="previewCloneButton" type="button" class="button-secondary">Preview Clone Speech</button>
+              </div>
+
+              <p class="microcopy">
+                Voicebox handles true cloned speech here. Astral also uses the selected clone as a singing reference in the song prompt, but the full sung output is still driven by the song engine rather than a guaranteed singing voice clone.
+              </p>
+
+              <div id="cloneResults" class="mini-results">
+                <article class="empty-state compact">
+                  <h3>No voice clone activity yet</h3>
+                  <p>Create a profile from a spoken reference clip, then preview the cloned voice here.</p>
+                </article>
+              </div>
+            </section>
+          </section>
+
+          <label class="field">
+            <span>Duration</span>
+            <input id="duration" name="duration" type="range" min="10" max="240" value="60" />
+            <strong id="durationValue">60s</strong>
+          </label>
+
+          <label class="field">
+            <span>Candidates</span>
+            <input id="candidates" name="candidates" type="range" min="1" max="2" value="1" />
+            <strong id="candidatesValue">1</strong>
+          </label>
+
+          <label class="field advanced-only">
+            <span>Compose variants</span>
+            <select id="compose_variants" name="compose_variants">
+              <option value="1" selected>1 song</option>
+              <option value="2">2 songs</option>
+              <option value="3">3 songs</option>
+              <option value="4">4 songs</option>
+            </select>
+            <small class="field-note">Ask Astral for several distinct song plans from the same brief at once.</small>
+          </label>
+
+          <label class="field advanced-only">
+            <span>Seed</span>
+            <input id="seed" name="seed" type="number" min="1" max="2147483647" placeholder="Optional" />
+          </label>
+
+          <div class="field toggle-field">
+            <span>Astral AI composer</span>
+            <label class="toggle">
+              <input id="use_ai" name="use_ai" type="checkbox" checked />
+              <span>Use local Ollama to write the song brief and lyrics plan before rendering</span>
+            </label>
+          </div>
+
+          <div class="field toggle-field advanced-only ace-step-only">
+            <span>ACE-Step thinking</span>
+            <label class="toggle">
+              <input id="thinking" name="thinking" type="checkbox" checked />
+              <span>Use ACE-Step's internal song LM for more structured generation when available. Astral auto-turns this off on long full-song renders for reliability.</span>
+            </label>
+          </div>
+
+          <div class="field toggle-field advanced-only ace-step-only">
+            <span>Format input</span>
+            <label class="toggle">
+              <input id="use_format" name="use_format" type="checkbox" />
+              <span>Let ACE-Step polish the caption and lyric structure before rendering</span>
+            </label>
+          </div>
+
+          <div class="button-row field-wide">
+            <button id="composeButton" type="button" class="button-secondary">Compose Song</button>
+            <button id="compareButton" type="button" class="button-tertiary">Compare Engines</button>
+            <button id="generateButton" type="submit">Generate Song</button>
+            <p class="microcopy">
+              Ollama handles writing, the selected song engine handles rendering, HDemucs handles stem splitting, and your draft autosaves while you work.
+            </p>
+          </div>
+        </form>
+
+        <aside class="control-rail">
+          <article class="rail-card rail-card-accent">
+            <p class="section-tag">Session Actions</p>
+            <h3>Render from here</h3>
+            <p>Use these sticky controls when you want the layout to feel more like a studio console than a long form.</p>
+            <div class="rail-actions">
+              <button id="railComposeButton" type="button" class="button-secondary">Compose Song</button>
+              <button id="railCompareButton" type="button" class="button-tertiary">Compare Engines</button>
+              <button id="railGenerateButton" type="button">Generate Song</button>
+              <button id="railPreviewVoiceButton" type="button" class="button-tertiary advanced-only">Preview Voice</button>
+              <button id="railAliceVoiceboxButton" type="button" class="button-tertiary advanced-only">Preview Alice Voicebox</button>
+            </div>
+          </article>
+
+          <article class="rail-card">
+            <p class="section-tag">Model Stack</p>
+            <h3>Installed locally</h3>
+            <p id="railModelSummary" class="microcopy">Loading local model catalog...</p>
+          </article>
+
+          <article class="rail-card">
+            <p class="section-tag">Flow</p>
+            <h3>Suggested path</h3>
+            <ol class="rail-list">
+              <li>Pick a preset or write the brief.</li>
+              <li>Compose a plan if you want lyrics help.</li>
+              <li>Preview the singer if the voice matters.</li>
+              <li>Generate the full song.</li>
+            </ol>
+          </article>
+
+          <article class="rail-card advanced-only">
+            <p class="section-tag">Studio Tools</p>
+            <h3>Advanced work</h3>
+            <p class="microcopy">Singer routing, voice cloning, stem surgery, and lyric alignment live below when you need deeper control.</p>
+          </article>
+        </aside>
+        </div>
+      </section>
+
+      <section class="panel panel-results" id="outputDeck">
+        <div class="panel-heading">
+          <div>
+            <p class="section-tag">Output Deck</p>
+            <h2>Rendered songs</h2>
+          </div>
+          <div class="status" id="statusLine">Idle.</div>
+        </div>
+
+        <div id="resolvedPrompt" class="resolved-prompt hidden"></div>
+        <div id="resolvedLyrics" class="lyric-preview hidden"></div>
+        <div id="planSummary" class="plan-summary hidden"></div>
+        <div id="results" class="results-grid">
+          <article class="empty-state">
+            <h3>No songs rendered yet</h3>
+            <p>Your full-song outputs will appear here with playback, output paths, and quick buttons for stem work.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel panel-tools advanced-only" id="stemStudio">
+        <div class="panel-heading">
+          <div>
+            <p class="section-tag">Stem Studio</p>
+            <h2>Split, remix, and lyric-match</h2>
+          </div>
+          <div class="status" id="toolStatusLine">Ready for stem work.</div>
+        </div>
+
+        <div class="tools-grid">
+          <section class="tool-card">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Split</p>
+                <h3>Separate vocals and instruments</h3>
+              </div>
+            </div>
+            <label class="field">
+              <span>Mix path</span>
+              <input id="split_audio_path" type="text" placeholder="Paste a rendered song path or use a result card" />
+            </label>
+            <label class="field">
+              <span>Job label</span>
+              <input id="split_title" type="text" placeholder="alice-stems" />
+            </label>
+            <button id="splitButton" type="button">Split Stems</button>
+            <div id="stemResults" class="mini-results">
+              <article class="empty-state compact">
+                <h3>No stems yet</h3>
+                <p>Split a render and Astral will create local `vocals` and `instrumental` files.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="tool-card">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Rebuild</p>
+                <h3>Put the pieces back together</h3>
+              </div>
+            </div>
+            <label class="field">
+              <span>Vocals path</span>
+              <input id="remix_vocals_path" type="text" placeholder="Path to vocals.wav" />
+            </label>
+            <label class="field">
+              <span>Instrumental path</span>
+              <input id="remix_instrumental_path" type="text" placeholder="Path to instrumental.wav" />
+            </label>
+            <label class="field slider-field">
+              <span>Vocals gain</span>
+              <input id="vocals_gain_db" type="range" min="-18" max="18" value="0" />
+              <strong id="vocalsGainValue">0 dB</strong>
+            </label>
+            <label class="field slider-field">
+              <span>Instrumental gain</span>
+              <input id="instrumental_gain_db" type="range" min="-18" max="18" value="0" />
+              <strong id="instrumentalGainValue">0 dB</strong>
+            </label>
+            <label class="field">
+              <span>Remix title</span>
+              <input id="remix_title" type="text" placeholder="alice-remix-pass-2" />
+            </label>
+            <button id="remixButton" type="button">Rebuild Mix</button>
+            <div id="remixResults" class="mini-results">
+              <article class="empty-state compact">
+                <h3>No remix yet</h3>
+                <p>Blend a regenerated vocal or instrumental stem back into a finished mix.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="tool-card tool-card-wide">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Lyric Match</p>
+                <h3>Map lyrics against the arrangement</h3>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field">
+                <span>Audio path</span>
+                <input id="alignment_audio_path" type="text" placeholder="Path to a mix, instrumental, or vocal stem" />
+              </label>
+              <label class="field">
+                <span>Mode</span>
+                <select id="alignment_mode">
+                  <option value="lyrics_to_audio">Lyrics to audio</option>
+                  <option value="audio_to_lyrics">Audio to lyrics</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="field field-wide">
+              <span>Lyrics to map</span>
+              <textarea
+                id="alignment_lyrics"
+                rows="6"
+                placeholder="Use the song lyrics here, or let Astral infer arrangement zones from the audio if you leave this empty."
+              ></textarea>
+            </label>
+
+            <div class="button-row field-wide">
+              <button id="copyLyricsButton" type="button" class="button-secondary">Use Current Lyrics</button>
+              <button id="matchButton" type="button">Match Lyrics + Audio</button>
+            </div>
+
+            <div id="alignmentResults" class="mini-results">
+              <article class="empty-state compact">
+                <h3>No timing map yet</h3>
+                <p>Astral will suggest section boundaries and line timings so tweaks land faster.</p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+  </html>

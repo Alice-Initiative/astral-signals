@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astral-signals"
+version = "0.1.0"
+description = "Local text-to-music pipeline branded as Astral Signals."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.136.1",
+  "numpy>=2.3.1",
+  "pydantic>=2.11.4",
+  "scipy>=1.17.1",
+  "sentencepiece>=0.2.0",
+  "soundfile>=0.13.1",
+  "torch>=2.10.0",
+  "torchaudio>=2.10.0",
+  "transformers>=4.57.1",
+  "uvicorn>=0.46.0",
+]
+
+[project.scripts]
+astral-signals = "astral_signals.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["astral_signals*"]
+
+[tool.setuptools.package-data]
+astral_signals = ["static/*"]
