@@ -11,6 +11,7 @@ if ([string]::IsNullOrWhiteSpace($buildRoot)) {
 $desktopBuildRoot = Join-Path $buildRoot "desktop-app"
 $distPath = Join-Path $desktopBuildRoot "dist"
 $workPath = Join-Path $desktopBuildRoot "build"
+$shortcutPath = Join-Path $desktopBuildRoot "Astral Signals.lnk"
 
 [System.IO.Directory]::CreateDirectory($distPath) | Out-Null
 [System.IO.Directory]::CreateDirectory($workPath) | Out-Null
@@ -28,6 +29,15 @@ if (-not (Test-Path -LiteralPath $exePath)) {
   throw "Desktop build finished without producing $exePath"
 }
 
+$wsh = New-Object -ComObject WScript.Shell
+$shortcut = $wsh.CreateShortcut($shortcutPath)
+$shortcut.TargetPath = $exePath
+$shortcut.WorkingDirectory = $distPath
+$shortcut.IconLocation = "$exePath,0"
+$shortcut.Description = "Astral Signals desktop app"
+$shortcut.Save()
+
 Write-Host ""
 Write-Host "Astral Signals desktop build complete:" -ForegroundColor Cyan
 Write-Host "  $exePath"
+Write-Host "  $shortcutPath"
