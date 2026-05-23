@@ -51,4 +51,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=str(project_root / "astral_signals" / "static" / "astral-signals-icon.ico"),
 )

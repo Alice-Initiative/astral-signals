@@ -22,6 +22,13 @@ APP_MIN_HEIGHT = 820
 APP_STARTUP_TIMEOUT_SECONDS = 30.0
 
 
+def desktop_icon_path() -> str | None:
+    icon_path = settings.static_dir / "astral-signals-icon.ico"
+    if icon_path.is_file():
+        return str(icon_path)
+    return None
+
+
 def base_url() -> str:
     return f"http://{settings.host}:{settings.port}"
 
@@ -156,7 +163,7 @@ def open_desktop_window() -> None:
             background_color="#0b0918",
             text_select=True,
         )
-        webview.start()
+        webview.start(icon=desktop_icon_path())
     finally:
         managed_server.stop()
 

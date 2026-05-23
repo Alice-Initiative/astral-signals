@@ -305,49 +305,19 @@ body::after {
   width: 4.8rem;
   height: 4.8rem;
   border-radius: 1.5rem;
-  background:
-    radial-gradient(circle at 32% 32%, rgba(255, 216, 245, 0.42), transparent 38%),
-    linear-gradient(180deg, rgba(31, 24, 63, 0.94), rgba(13, 10, 31, 0.88));
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(31, 24, 63, 0.94), rgba(13, 10, 31, 0.88));
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 24px 42px rgba(9, 9, 26, 0.3);
 }
 
-.brand-planet,
-.brand-ring,
-.brand-star {
-  position: absolute;
-}
-
-.brand-planet {
-  inset: 1.3rem 1.35rem 1.35rem 1.3rem;
-  border-radius: 999px;
-  background: radial-gradient(circle at 38% 38%, rgba(255, 210, 244, 0.95), rgba(120, 101, 232, 0.28));
-  box-shadow: 0 0 18px rgba(147, 180, 255, 0.28);
-}
-
-.brand-ring {
-  left: 0.7rem;
-  right: 0.7rem;
-  top: 1.35rem;
-  height: 1.45rem;
-  border-radius: 999px;
-  border: 1px solid rgba(164, 205, 255, 0.78);
-  transform: rotate(19deg);
-  box-shadow: 0 0 16px rgba(164, 205, 255, 0.14);
-}
-
-.brand-star {
-  width: 0.5rem;
-  height: 0.5rem;
-  right: 1.15rem;
-  top: 1rem;
-  border-radius: 999px;
-  background: white;
-  box-shadow:
-    0 0 0 4px rgba(255, 255, 255, 0.05),
-    0 0 14px rgba(255, 255, 255, 0.84);
+.brand-mark-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .sidebar-links {
@@ -1509,11 +1479,15 @@ button:disabled {
   height: 4.2rem;
   border-radius: 1.1rem;
   background:
-    radial-gradient(circle at 35% 35%, rgba(255, 215, 246, 0.74), transparent 28%),
-    radial-gradient(circle at 68% 32%, rgba(123, 197, 255, 0.72), transparent 18%),
-    linear-gradient(135deg, rgba(72, 50, 148, 0.92), rgba(20, 15, 47, 0.96));
+    linear-gradient(135deg, rgba(72, 50, 148, 0.58), rgba(20, 15, 47, 0.7)),
+    url("/static/astral-signals-icon.png");
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-size: cover, cover;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 30px rgba(18, 18, 46, 0.24);
 }
 
 .transport-actions {
