@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import socket
 import threading
 import time
@@ -20,6 +21,7 @@ APP_HEIGHT = 1040
 APP_MIN_WIDTH = 1220
 APP_MIN_HEIGHT = 820
 APP_STARTUP_TIMEOUT_SECONDS = 30.0
+APP_USER_MODEL_ID = "AliceInitiative.AstralSignals"
 
 
 def desktop_icon_path() -> str | None:
@@ -27,6 +29,15 @@ def desktop_icon_path() -> str | None:
     if icon_path.is_file():
         return str(icon_path)
     return None
+
+
+def set_windows_app_user_model_id() -> None:
+    if not hasattr(ctypes, "windll"):
+        return
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_USER_MODEL_ID)
+    except Exception:
+        return
 
 
 def base_url() -> str:
@@ -151,6 +162,7 @@ def run_smoke_test() -> None:
 
 def open_desktop_window() -> None:
     webview = require_webview()
+    set_windows_app_user_model_id()
     managed_server = ManagedUvicornServer()
     managed_server.start()
     try:

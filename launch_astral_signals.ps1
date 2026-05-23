@@ -59,6 +59,8 @@ Set-IfMissing "TRANSFORMERS_CACHE" "$env:ASTRAL_SIGNALS_HOME\cache\huggingface\v
 Set-IfMissing "TEMP" "$env:ASTRAL_SIGNALS_HOME\cache\tmp"
 Set-IfMissing "TMP" "$env:ASTRAL_SIGNALS_HOME\cache\tmp"
 
+$desktopExe = Join-Path $env:ASTRAL_SIGNALS_HOME "desktop-app\dist\AstralSignals.exe"
+
 [System.IO.Directory]::CreateDirectory($env:VOICEBOX_MODELS_DIR) | Out-Null
 [System.IO.Directory]::CreateDirectory($env:HF_HOME) | Out-Null
 [System.IO.Directory]::CreateDirectory($env:TEMP) | Out-Null
@@ -74,5 +76,10 @@ elseif ($Browser) {
   python -m astral_signals.desktop --browser
 }
 else {
-  python -m astral_signals.desktop
+  if (Test-Path -LiteralPath $desktopExe) {
+    & $desktopExe
+  }
+  else {
+    python -m astral_signals.desktop
+  }
 }
