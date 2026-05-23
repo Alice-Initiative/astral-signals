@@ -15,6 +15,13 @@ python -m pip install -e .
 .\launch_astral_signals.ps1
 ```
 
+Fallback modes:
+
+```powershell
+.\launch_astral_signals.ps1 -Browser
+.\launch_astral_signals.ps1 -ServerOnly
+```
+
 Optional backends:
 
 ```powershell
@@ -28,7 +35,7 @@ Optional backends:
 - Keep changes local-first and privacy-aware
 - Prefer defaults that are friendly to smaller single-GPU systems when practical
 - Be explicit about experimental backends in UI copy and docs
-- If you change frontend behavior, verify it in the live browser at `http://127.0.0.1:7860`
+- If you change frontend behavior, verify it in the desktop app window and, when needed, the browser fallback at `http://127.0.0.1:7860`
 - If you add or tune a backend, record whether it is only staged or actually locally verified
 
 ## Pull requests

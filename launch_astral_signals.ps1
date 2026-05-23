@@ -1,3 +1,9 @@
+[CmdletBinding()]
+param(
+  [switch]$Browser,
+  [switch]$ServerOnly
+)
+
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
@@ -56,4 +62,17 @@ Set-IfMissing "TMP" "$env:ASTRAL_SIGNALS_HOME\cache\tmp"
 [System.IO.Directory]::CreateDirectory($env:VOICEBOX_MODELS_DIR) | Out-Null
 [System.IO.Directory]::CreateDirectory($env:HF_HOME) | Out-Null
 [System.IO.Directory]::CreateDirectory($env:TEMP) | Out-Null
-python -m astral_signals.server
+
+if ($Browser -and $ServerOnly) {
+  throw "Choose either -Browser or -ServerOnly, not both."
+}
+
+if ($ServerOnly) {
+  python -m astral_signals.desktop --server-only
+}
+elseif ($Browser) {
+  python -m astral_signals.desktop --browser
+}
+else {
+  python -m astral_signals.desktop
+}

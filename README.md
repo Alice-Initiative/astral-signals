@@ -1,6 +1,6 @@
 # Astral Signals
 
-Astral Signals is a local-first "idea to full song" studio for Windows. It lets you stay lightweight in `Quickstart` or go deep in `Studio` with multilingual lyrics, singer routing, cloned voice previews, stem workflows, and Alice-driven orchestration.
+Astral Signals is a local-first desktop song studio for Windows. It opens as a native app window by default, while still keeping its local web stack under the hood for rendering, draft management, multilingual lyrics, singer routing, cloned voice previews, stem workflows, and Alice-driven orchestration.
 
 [![Python](https://img.shields.io/badge/python-3.11%2B-7aa2ff)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows-8bd5ff)](https://www.microsoft.com/windows)
@@ -86,7 +86,16 @@ $env:ASTRAL_SIGNALS_HOME = "S:\AstralSignals"
 .\launch_astral_signals.ps1
 ```
 
-Then open [http://127.0.0.1:7860](http://127.0.0.1:7860).
+That opens Astral in its desktop window.
+
+Fallback launch modes:
+
+```powershell
+.\launch_astral_signals.ps1 -Browser
+.\launch_astral_signals.ps1 -ServerOnly
+```
+
+The browser fallback uses [http://127.0.0.1:7860](http://127.0.0.1:7860).
 
 ## Backend bootstrap
 
@@ -106,6 +115,20 @@ Then open [http://127.0.0.1:7860](http://127.0.0.1:7860).
 
 ```powershell
 .\bootstrap_heartmula_backend.ps1
+```
+
+## Desktop build
+
+To package Astral as a Windows app executable:
+
+```powershell
+.\build_astral_signals_app.ps1
+```
+
+That produces:
+
+```text
+S:\AstralSignals\desktop-app\dist\AstralSignals.exe
 ```
 
 ## Suggested user flow
@@ -135,6 +158,8 @@ bootstrap_optional_engines.ps1   Optional repo/vendor sync
 bootstrap_songgeneration_backend.ps1
 bootstrap_heartmula_backend.ps1
 launch_astral_signals.ps1        Local launcher
+build_astral_signals_app.ps1     Desktop app packager
+astral_signals_desktop.spec      PyInstaller spec for the Windows app
 docs/astral-signals-ui.png       Live Quickstart screenshot
 docs/astral-signals-ui-studio.png Live Studio screenshot
 ```

@@ -10,8 +10,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.136.1",
-  "numpy>=2.3.1",
+  "numpy>=2.2,<2.3",
   "pydantic>=2.11.4",
+  "pywebview>=5.0",
   "scipy>=1.17.1",
   "sentencepiece>=0.2.0",
   "soundfile>=0.13.1",
@@ -23,6 +24,7 @@ dependencies = [
 
 [project.scripts]
 astral-signals = "astral_signals.cli:main"
+astral-signals-app = "astral_signals.desktop:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -31,4 +33,4 @@ include-package-data = true
 include = ["astral_signals*"]
 
 [tool.setuptools.package-data]
-astral_signals = ["static/*"]
+astral_signals = ["static/*", "static/fonts/*"]

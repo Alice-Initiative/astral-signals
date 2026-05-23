@@ -3,10 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import sys
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PACKAGE_ROOT = Path(__file__).resolve().parent
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    PROJECT_ROOT = Path(sys._MEIPASS)
+    STATIC_DIR = PROJECT_ROOT / "astral_signals" / "static"
+else:
+    PROJECT_ROOT = PACKAGE_ROOT.parent
+    STATIC_DIR = PACKAGE_ROOT / "static"
 DEFAULT_STORAGE_ROOT = Path(os.getenv("ASTRAL_SIGNALS_HOME", r"S:\AstralSignals"))
-STATIC_DIR = Path(__file__).resolve().parent / "static"
 DEFAULT_VENDOR_ROOT = Path(os.getenv("ASTRAL_SIGNALS_VENDOR_ROOT", str(DEFAULT_STORAGE_ROOT / "vendors")))
 DEFAULT_OLLAMA_BIN = Path(os.getenv("ASTRAL_SIGNALS_OLLAMA_BIN", r"S:\Ollama\app\ollama.exe"))
 DEFAULT_OLLAMA_MODELS = Path(os.getenv("ASTRAL_SIGNALS_OLLAMA_MODELS", r"S:\Ollama\.ollama\models"))
