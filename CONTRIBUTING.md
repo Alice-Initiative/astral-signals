@@ -4,7 +4,7 @@ Thanks for helping improve Astral Signals.
 
 ## Before you start
 
-- The main local workflow is currently tuned for `Windows + NVIDIA CUDA`
+- The main local workflow is currently tuned for `Windows + NVIDIA CUDA`, but the app should still launch cleanly in CPU-only mode
 - Heavy assets are expected to live outside the repo, usually under `S:\AstralSignals`
 - Please avoid committing local caches, outputs, logs, or downloaded model weights
 
@@ -34,6 +34,7 @@ Optional backends:
 
 - Keep changes local-first and privacy-aware
 - Prefer defaults that are friendly to smaller single-GPU systems when practical
+- Keep CPU-only fallback paths honest: if a backend really needs CUDA, disable it clearly instead of letting it fail late
 - Be explicit about experimental backends in UI copy and docs
 - If you change frontend behavior, verify it in the desktop app window and, when needed, the browser fallback at `http://127.0.0.1:7860`
 - If you add or tune a backend, record whether it is only staged or actually locally verified

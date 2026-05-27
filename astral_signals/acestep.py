@@ -8,6 +8,7 @@ import time
 from typing import Any
 from urllib import error, parse, request
 from datetime import datetime
+import torch
 
 from astral_signals.config import settings
 
@@ -216,6 +217,12 @@ class AceStepClient:
         self.restart_server(requested_lm_model=requested_lm_model)
 
     def ensure_server(self, requested_lm_model: str | None = None) -> None:
+        if not torch.cuda.is_available():
+            raise AceStepError(
+                "ACE-Step currently requires CUDA in Astral. "
+                "This machine is running in CPU-only mode, so use MusicGen for local sketches or move the sung render to a CUDA machine."
+            )
+
         requested_model = (requested_lm_model or "").strip() or self.default_lm_model
         health_payload = self._health_payload()
         if health_payload is not None:
@@ -280,8 +287,14 @@ class AceStepClient:
 
     def status(self) -> dict[str, Any]:
         health_payload = self._health_payload()
+        installed = self.repo_dir.exists() and self.api_binary.exists()
+        cuda_available = torch.cuda.is_available()
         return {
-            "available": self.repo_dir.exists() and self.api_binary.exists(),
+            "installed": installed,
+            "available": installed and cuda_available,
+            "requires_cuda": True,
+            "cuda_available": cuda_available,
+            "cpu_supported": False,
             "running": health_payload is not None,
             "host": self.base_url,
             "repo_dir": str(self.repo_dir),
@@ -290,6 +303,11 @@ class AceStepClient:
             "default_model": self.default_model,
             "default_lm_model": self.default_lm_model,
             "health": (health_payload or {}).get("data", {}),
+            "error": (
+                "ACE-Step currently requires CUDA in Astral."
+                if installed and not cuda_available
+                else ""
+            ),
         }
 
     def list_models(self) -> list[dict[str, Any]]:

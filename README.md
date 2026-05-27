@@ -27,11 +27,13 @@ Heavy assets default to `S:\AstralSignals`, so large model downloads and audio o
 | Role | Engine | Status |
 | --- | --- | --- |
 | Composer | Ollama | Ready |
-| Main sung-song engine | ACE-Step 1.5 | Ready |
-| Fast sketch engine | MusicGen | Ready |
-| Stem-native alternate engine | SongGeneration / LeVo 2 | Experimental, locally verified with `songgeneration_v2_large` |
-| Alternate lyric-song engine | HeartMuLa OSS 3B | Experimental, locally verified |
+| Main sung-song engine | ACE-Step 1.5 | Ready on CUDA |
+| Fast sketch engine | MusicGen | Ready on CUDA or CPU |
+| Stem-native alternate engine | SongGeneration / LeVo 2 | Experimental, CUDA required |
+| Alternate lyric-song engine | HeartMuLa OSS 3B | Experimental, CUDA required |
 | Cloned speech / voice preview | Voicebox | Ready |
+
+CPU-only mode is supported for composition, MusicGen sketch renders, Voicebox previews, translation, drafting, arrangement, Mix Deck, and Stem Studio. The sung full-song backends currently need CUDA.
 
 ## Main features
 
@@ -96,6 +98,17 @@ Fallback launch modes:
 ```
 
 The browser fallback uses [http://127.0.0.1:7860](http://127.0.0.1:7860).
+
+### CPU-only note
+
+If this machine does not have CUDA, Astral will still launch and automatically fall back to:
+
+- `MusicGen` for local sketch renders
+- `Ollama` for composition
+- `Voicebox` for spoken or cloned previews
+- local editing tools like drafts, lyrics, arrangement, Mix Deck, and Stem Studio
+
+In CPU-only mode, `ACE-Step`, `SongGeneration`, and `HeartMuLa` stay visible in the catalog but are disabled with a `CUDA required` label.
 
 ## Backend bootstrap
 

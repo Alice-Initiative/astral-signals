@@ -5,6 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import torch
+
 from astral_signals.config import settings
 
 SONGGENERATION_MODEL_LIBRARY: list[dict[str, Any]] = [
@@ -134,6 +136,8 @@ class SongGenerationClient:
 
     def is_ready(self) -> bool:
         return (
+            torch.cuda.is_available()
+            and
             self.repo_dir.exists()
             and self.python_binary.exists()
             and self._runtime_ready()
@@ -142,10 +146,16 @@ class SongGenerationClient:
 
     def status(self) -> dict[str, Any]:
         available_models = self.list_models()
+        cuda_available = torch.cuda.is_available()
+        assets_ready = self.repo_dir.exists() and self.python_binary.exists() and self._runtime_ready()
         return {
             "repo_present": self.repo_dir.exists(),
             "venv_present": self.python_binary.exists(),
             "runtime_present": self._runtime_ready(),
+            "assets_ready": assets_ready,
+            "requires_cuda": True,
+            "cuda_available": cuda_available,
+            "cpu_supported": False,
             "repo_dir": str(self.repo_dir),
             "python_binary": str(self.python_binary),
             "runtime_dir": str(self.runtime_dir),
@@ -154,7 +164,12 @@ class SongGenerationClient:
             "low_mem": self.low_mem,
             "use_flash_attn": self.use_flash_attn,
             "available_models": available_models,
-            "ready": bool(available_models) and self.repo_dir.exists() and self.python_binary.exists() and self._runtime_ready(),
+            "ready": bool(available_models) and assets_ready and cuda_available,
+            "error": (
+                "SongGeneration currently requires CUDA in Astral."
+                if assets_ready and not cuda_available
+                else ""
+            ),
         }
 
     def list_models(self) -> list[dict[str, Any]]:
@@ -177,6 +192,11 @@ class SongGenerationClient:
         return models
 
     def ensure_ready(self, model_id: str) -> None:
+        if not torch.cuda.is_available():
+            raise SongGenerationError(
+                "SongGeneration currently requires CUDA in Astral. "
+                "Use MusicGen on CPU-only systems, or move this stem-native render to a CUDA machine."
+            )
         if not self.repo_dir.exists():
             raise SongGenerationError(
                 f"SongGeneration repo is missing at {self.repo_dir}. Run bootstrap_optional_engines.ps1 first."

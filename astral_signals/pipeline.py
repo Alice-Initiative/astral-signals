@@ -324,6 +324,16 @@ def detect_device() -> str:
     return "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def backend_requires_cuda(backend_id: str) -> bool:
+    return backend_id in {ACE_STEP_BACKEND, SONGGENERATION_BACKEND, HEARTMULA_BACKEND}
+
+
+def default_song_model_selection() -> str:
+    if torch.cuda.is_available():
+        return encode_song_model_selection(ACE_STEP_BACKEND, settings.ace_step_model)
+    return encode_song_model_selection(MUSICGEN_BACKEND, settings.musicgen_model)
+
+
 def clamp(value: int, minimum: int, maximum: int) -> int:
     return max(minimum, min(value, maximum))
 
@@ -1761,16 +1771,24 @@ class AstralRuntime:
         composer_error = ""
         ace_song_error = ""
         musicgen_error = ""
+        cuda_available = self.device == "cuda"
+        cpu_mode_note = (
+            "CPU-only mode is active. MusicGen, Ollama, Voicebox, translation, editing, and Mix Deck stay available, "
+            "but ACE-Step, SongGeneration, and HeartMuLa currently require CUDA."
+        )
 
         try:
             composer_models = ollama_client.list_models()
         except OllamaError as exc:
             composer_error = str(exc)
 
-        try:
-            ace_song_models = ace_step_client.list_models()
-        except AceStepError as exc:
-            ace_song_error = str(exc)
+        if cuda_available:
+            try:
+                ace_song_models = ace_step_client.list_models()
+            except AceStepError as exc:
+                ace_song_error = str(exc)
+        else:
+            ace_song_error = cpu_mode_note
 
         musicgen_models: list[dict[str, Any]] = []
         try:
@@ -1809,6 +1827,7 @@ class AstralRuntime:
                 }
             ]
 
+        ace_status = "ready" if cuda_available and not ace_song_error else "cuda-required" if not cuda_available else "configured"
         ace_song_model_options = [
             {
                 "id": encode_song_model_selection(
@@ -1816,11 +1835,14 @@ class AstralRuntime:
                     str(model.get("id") or model.get("name") or settings.ace_step_model),
                 ),
                 "label": f"ACE-Step · {model.get('name') or model.get('id') or settings.ace_step_model}",
-                "description": model.get("description") or "Full-song vocals, lyrics, and multilingual rendering.",
+                "description": (
+                    (model.get("description") or "Full-song vocals, lyrics, and multilingual rendering.")
+                    + (" CUDA is required on this machine." if not cuda_available else "")
+                ),
                 "backend": ACE_STEP_BACKEND,
-                "status": "ready" if not ace_song_error else "configured",
+                "status": ace_status,
                 "capabilities": "lyrics, multilingual, singer routing, long form",
-                "disabled": False,
+                "disabled": not cuda_available,
             }
             for model in ace_song_models
         ]
@@ -1829,14 +1851,19 @@ class AstralRuntime:
                 {
                     "id": encode_song_model_selection(ACE_STEP_BACKEND, settings.ace_step_model),
                     "label": f"ACE-Step · {settings.ace_step_model}",
-                    "description": "Configured default ACE-Step song engine.",
+                    "description": (
+                        "Configured default ACE-Step song engine."
+                        if cuda_available
+                        else "Configured default ACE-Step song engine. CUDA is required on this machine."
+                    ),
                     "backend": ACE_STEP_BACKEND,
-                    "status": "configured",
+                    "status": ace_status,
                     "capabilities": "lyrics, multilingual, singer routing, long form",
-                    "disabled": False,
+                    "disabled": not cuda_available,
                 }
             ]
 
+        musicgen_status = "ready" if cuda_available else "cpu-ready"
         musicgen_song_model_options = [
             {
                 "id": encode_song_model_selection(MUSICGEN_BACKEND, str(model.get("id") or settings.musicgen_model)),
@@ -1844,7 +1871,7 @@ class AstralRuntime:
                 "description": model.get("description")
                 or "Fast local instrumental and wordless sketch engine.",
                 "backend": MUSICGEN_BACKEND,
-                "status": "ready" if not musicgen_error else "configured",
+                "status": musicgen_status if not musicgen_error else "configured",
                 "capabilities": "instrumental, wordless, fast sketch",
                 "disabled": False,
             }
@@ -1862,11 +1889,12 @@ class AstralRuntime:
                         if model.get("verified_local")
                         else ""
                     )
+                    + (" CUDA is required on this machine." if not cuda_available else "")
                 ),
                 "backend": HEARTMULA_BACKEND,
-                "status": "experimental" if heartmula_status.get("ready") else "configured",
+                "status": "cuda-required" if not cuda_available else "experimental" if heartmula_status.get("ready") else "configured",
                 "capabilities": "lyrics, multilingual, arrangement control",
-                "disabled": not bool(heartmula_status.get("venv_present") and heartmula_status.get("checkpoints_present")),
+                "disabled": (not cuda_available) or not bool(heartmula_status.get("venv_present") and heartmula_status.get("checkpoints_present")),
                 "verified_local": bool(model.get("verified_local")),
             }
             for model in heartmula_models
@@ -1884,6 +1912,8 @@ class AstralRuntime:
                 if verified_local
                 else " This checkpoint is cataloged and selectable, but Astral has not finished a local proof render with it on this machine yet."
             )
+            if not cuda_available:
+                description += " CUDA is required on this machine."
             songgeneration_song_model_options.append(
                 {
                     "id": encode_song_model_selection(
@@ -1893,9 +1923,9 @@ class AstralRuntime:
                     "label": label,
                     "description": description,
                     "backend": SONGGENERATION_BACKEND,
-                    "status": "experimental",
+                    "status": "cuda-required" if not cuda_available else "experimental",
                     "capabilities": "lyrics, stems, dual-track, long form",
-                    "disabled": not bool(songgeneration_status.get("venv_present") and songgeneration_status.get("runtime_present")),
+                    "disabled": (not cuda_available) or not bool(songgeneration_status.get("venv_present") and songgeneration_status.get("runtime_present")),
                     "verified_local": verified_local,
                 }
             )
@@ -1906,25 +1936,29 @@ class AstralRuntime:
                 "id": ACE_STEP_BACKEND,
                 "label": "ACE-Step 1.5",
                 "kind": "render",
-                "ready": True,
-                "status": "ready" if not ace_song_error else "configured",
-                "status_label": "Ready" if not ace_song_error else "Configured",
+                "ready": bool(cuda_available and not ace_song_error),
+                "status": ace_status,
+                "status_label": "Ready" if ace_status == "ready" else "CUDA required" if ace_status == "cuda-required" else "Configured",
                 "description": "Astral's current full-song singing engine with lyric-following, multilingual prompting, and singer routing.",
                 "best_for": "Main sung song renders, locked-singer multilingual songs, and long-form lyric maps.",
-                "limitations": "Single engine path today; stem-native dual-track generation still needs another backend.",
+                "limitations": (
+                    "Single engine path today; stem-native dual-track generation still needs another backend."
+                    if cuda_available
+                    else "ACE-Step currently requires CUDA in Astral, so CPU-only machines should use MusicGen for sketches and editing workflows."
+                ),
                 "capabilities": ["lyrics", "multilingual", "singer routing", "long form"],
                 "repo_dir": str(settings.ace_step_repo),
                 "models": ace_song_model_options,
                 "select_value": ace_song_model_options[0]["id"],
-                "next_step": "Ready to render now.",
+                "next_step": "Ready to render now." if cuda_available else "Use MusicGen on this CPU-only machine, or move sung renders to a CUDA machine.",
             },
             {
                 "id": MUSICGEN_BACKEND,
                 "label": "MusicGen",
                 "kind": "render",
                 "ready": True,
-                "status": "ready" if not musicgen_error else "configured",
-                "status_label": "On-demand",
+                "status": musicgen_status if not musicgen_error else "configured",
+                "status_label": "On-demand" if cuda_available else "CPU-ready",
                 "description": "Fast local backing-track and wordless sketch engine from Hugging Face/AudioCraft.",
                 "best_for": "Instrumental beds, logo stings, arrangement sketches, and quick wordless cue passes.",
                 "limitations": "No true sung lyric-following path; use ACE-Step for real lyrical vocals.",
@@ -1932,15 +1966,22 @@ class AstralRuntime:
                 "repo_dir": str(settings.cache_dir),
                 "models": musicgen_song_model_options,
                 "select_value": musicgen_song_model_options[0]["id"] if musicgen_song_model_options else "",
-                "next_step": "First use downloads weights into the S: cache automatically.",
+                "next_step": (
+                    "First use downloads weights into the configured cache automatically."
+                    if not cuda_available
+                    else "First use downloads weights into the S: cache automatically."
+                ),
             },
             {
                 "id": SONGGENERATION_BACKEND,
                 "label": "SongGeneration / LeVo 2",
                 "kind": "render",
-                "ready": bool(songgeneration_status.get("ready")),
-                "status": "experimental" if songgeneration_status.get("ready") else "configured" if songgeneration_status.get("venv_present") else "repo-synced" if songgeneration_status.get("repo_present") else "not-installed",
+                "ready": bool(cuda_available and songgeneration_status.get("ready")),
+                "status": "cuda-required" if not cuda_available else "experimental" if songgeneration_status.get("ready") else "configured" if songgeneration_status.get("venv_present") else "repo-synced" if songgeneration_status.get("repo_present") else "not-installed",
                 "status_label": (
+                    "CUDA required"
+                    if not cuda_available
+                    else
                     "Experimental"
                     if songgeneration_status.get("ready")
                     else "Weights missing"
@@ -1951,13 +1992,20 @@ class AstralRuntime:
                 ),
                 "description": "Stem-native lyrics-to-song backend that can emit the full mix plus separate vocals and accompaniment in one render.",
                 "best_for": "Alternative sung renders when you want native vocal and instrumental stems instead of post-splitting.",
-                "limitations": "Current Astral adapter is experimental on Windows and happiest with the lighter SongGeneration checkpoints.",
+                "limitations": (
+                    "Current Astral adapter is experimental on Windows and happiest with the lighter SongGeneration checkpoints."
+                    if cuda_available
+                    else "SongGeneration currently requires CUDA in Astral."
+                ),
                 "capabilities": ["lyrics", "stems", "dual-track", "full song"],
                 "repo_dir": str(settings.songgeneration_repo),
                 "repo_url": "https://github.com/tencent-ailab/SongGeneration",
                 "models": songgeneration_song_model_options,
                 "select_value": songgeneration_song_model_options[0]["id"] if songgeneration_song_model_options else "",
                 "next_step": (
+                    "Use MusicGen on this CPU-only machine, or move stem-native renders to a CUDA machine."
+                    if not cuda_available
+                    else
                     "Try it as an experimental stem-native backend now. If it bogs down, switch back to ACE-Step for the main production render."
                     if songgeneration_status.get("ready")
                     else "Run bootstrap_songgeneration_backend.ps1 to install the backend venv, runtime assets, and a checkpoint."
@@ -1967,9 +2015,12 @@ class AstralRuntime:
                 "id": HEARTMULA_BACKEND,
                 "label": "HeartMuLa",
                 "kind": "render",
-                "ready": bool(heartmula_status.get("ready")),
-                "status": "experimental" if heartmula_status.get("ready") else "configured" if heartmula_status.get("venv_present") else "repo-synced" if heartmula_status.get("repo_present") else "not-installed",
+                "ready": bool(cuda_available and heartmula_status.get("ready")),
+                "status": "cuda-required" if not cuda_available else "experimental" if heartmula_status.get("ready") else "configured" if heartmula_status.get("venv_present") else "repo-synced" if heartmula_status.get("repo_present") else "not-installed",
                 "status_label": (
+                    "CUDA required"
+                    if not cuda_available
+                    else
                     "Experimental"
                     if heartmula_status.get("ready")
                     else "Weights missing"
@@ -1980,13 +2031,20 @@ class AstralRuntime:
                 ),
                 "description": "Lyrics-first full-song backend with stronger multilingual control and tag-driven arrangement cues.",
                 "best_for": "Alternative sung full-song renders when you want another lyrics-focused engine beside ACE-Step.",
-                "limitations": "Current Astral adapter is lyric-song only, and the Windows + 16GB path is still experimental even after checkpoints are installed.",
+                "limitations": (
+                    "Current Astral adapter is lyric-song only, and the Windows + 16GB path is still experimental even after checkpoints are installed."
+                    if cuda_available
+                    else "HeartMuLa currently requires CUDA in Astral."
+                ),
                 "capabilities": ["lyrics", "multilingual", "tag control", "full song"],
                 "repo_dir": str(settings.heartmula_repo),
                 "repo_url": "https://github.com/HeartMuLa/heartlib",
                 "models": heartmula_song_model_options,
                 "select_value": heartmula_song_model_options[0]["id"] if heartmula_song_model_options else "",
                 "next_step": (
+                    "Use MusicGen on this CPU-only machine, or move HeartMuLa renders to a CUDA machine."
+                    if not cuda_available
+                    else
                     "Astral has finished a local smoke render with HeartMuLa on this machine, but it still stays marked experimental while we learn its longer-form behavior."
                     if heartmula_status.get("ready")
                     else "Run bootstrap_heartmula_backend.ps1 to install the backend venv and download checkpoints."
@@ -2041,7 +2099,7 @@ class AstralRuntime:
         return {
             "defaults": {
                 "composer_model": settings.ollama_model,
-                "song_model": encode_song_model_selection(ACE_STEP_BACKEND, settings.ace_step_model),
+                "song_model": default_song_model_selection(),
                 "storage_root": str(settings.storage_root),
             },
             "composer_models": composer_model_options,
@@ -2090,7 +2148,11 @@ class AstralRuntime:
                 "launcher_defaults_to_s_drive": True,
                 "works_without_s_drive_if_env_is_set": True,
                 "recommended_python": "3.11+",
-                "platform_note": "Primary local workflow is currently tuned for Windows + NVIDIA CUDA.",
+                "platform_note": (
+                    "Primary local workflow is currently tuned for Windows + NVIDIA CUDA."
+                    if cuda_available
+                    else cpu_mode_note
+                ),
             },
             "errors": {
                 "composer_models": composer_error,
@@ -2101,6 +2163,7 @@ class AstralRuntime:
         }
 
     def system_status(self) -> dict[str, object]:
+        catalog = self.app_catalog()
         gpu_name = torch.cuda.get_device_name(0) if self.device == "cuda" else None
         return {
             "device": self.device,
@@ -2109,7 +2172,7 @@ class AstralRuntime:
             "storage_root": str(settings.storage_root),
             "output_dir": str(settings.output_dir),
             "cache_dir": str(settings.cache_dir),
-            "default_song_model": settings.ace_step_model,
+            "default_song_model": (catalog.get("defaults", {}) or {}).get("song_model"),
             "max_duration_seconds": MAX_DURATION_SECONDS,
             "recommended_candidates": MAX_CANDIDATES,
             "ace_step": ace_step_client.status(),
@@ -2120,7 +2183,8 @@ class AstralRuntime:
             "multilingual": multilingual_client.status(),
             "voicebox": voicebox_client.status(),
             "audio_tools": audio_tools.status(),
-            "engine_catalog": self.app_catalog().get("engine_catalog", []),
+            "distribution": catalog.get("distribution", {}),
+            "engine_catalog": catalog.get("engine_catalog", []),
         }
 
     def _create_session_dir(self, title: str) -> Path:
@@ -3271,6 +3335,17 @@ class AstralRuntime:
 
     def _run_generation(self, request: GenerationRequest) -> dict[str, object]:
         backend_id, _ = decode_song_model_selection(request.song_model)
+        if self.device != "cuda" and backend_requires_cuda(backend_id):
+            backend_labels = {
+                ACE_STEP_BACKEND: "ACE-Step",
+                SONGGENERATION_BACKEND: "SongGeneration",
+                HEARTMULA_BACKEND: "HeartMuLa",
+            }
+            backend_label = backend_labels.get(backend_id, backend_id)
+            raise AstralPipelineError(
+                f"{backend_label} currently requires CUDA in Astral, and this machine is running in CPU-only mode. "
+                "Use MusicGen for local sketch renders, or move the full sung render to a CUDA machine."
+            )
         if backend_id == MUSICGEN_BACKEND:
             return self._run_musicgen_generation(request)
         if backend_id == SONGGENERATION_BACKEND:

@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import torch
+
 from astral_signals.config import settings
 
 
@@ -38,19 +40,35 @@ class HeartMuLaClient:
         )
 
     def is_ready(self) -> bool:
-        return self.repo_dir.exists() and self.python_binary.exists() and self._checkpoint_ready()
+        return (
+            torch.cuda.is_available()
+            and self.repo_dir.exists()
+            and self.python_binary.exists()
+            and self._checkpoint_ready()
+        )
 
     def status(self) -> dict[str, Any]:
+        cuda_available = torch.cuda.is_available()
+        assets_ready = self.repo_dir.exists() and self.python_binary.exists() and self._checkpoint_ready()
         return {
             "repo_present": self.repo_dir.exists(),
             "venv_present": self.python_binary.exists(),
             "checkpoints_present": self._checkpoint_ready(),
+            "assets_ready": assets_ready,
+            "requires_cuda": True,
+            "cuda_available": cuda_available,
+            "cpu_supported": False,
             "repo_dir": str(self.repo_dir),
             "python_binary": str(self.python_binary),
             "ckpt_dir": str(self.ckpt_dir),
             "default_model": self.default_model,
             "default_version": self.default_version,
-            "ready": self.is_ready(),
+            "ready": assets_ready and cuda_available,
+            "error": (
+                "HeartMuLa currently requires CUDA in Astral."
+                if assets_ready and not cuda_available
+                else ""
+            ),
         }
 
     def list_models(self) -> list[dict[str, Any]]:
@@ -64,6 +82,11 @@ class HeartMuLaClient:
         ]
 
     def ensure_ready(self) -> None:
+        if not torch.cuda.is_available():
+            raise HeartMuLaError(
+                "HeartMuLa currently requires CUDA in Astral. "
+                "Use MusicGen on CPU-only systems, or move this full-song render to a CUDA machine."
+            )
         if not self.repo_dir.exists():
             raise HeartMuLaError(
                 f"HeartMuLa repo is missing at {self.repo_dir}. Run bootstrap_optional_engines.ps1 first."

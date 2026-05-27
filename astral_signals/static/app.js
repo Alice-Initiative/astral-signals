@@ -211,6 +211,13 @@ function populateModelSelect(selectId, options = [], defaultValue = "") {
   }
 
   select.value = currentValue || usableOptions[0]?.id || "";
+  const selectedOption = [...select.options].find((option) => option.value === select.value);
+  if (selectedOption?.disabled) {
+    const firstEnabled = [...select.options].find((option) => !option.disabled);
+    if (firstEnabled) {
+      select.value = firstEnabled.value;
+    }
+  }
   if (select.value) {
     select.dataset.pendingValue = select.value;
   }
@@ -374,7 +381,12 @@ function syncSelectedEngineBehavior() {
   const vocalMode = byId("vocal_mode")?.value || "lyrics";
   const selectedOption = songSelect?.options?.[songSelect.selectedIndex];
   const backend = selectedOption?.dataset?.backend || "";
+  const status = selectedOption?.dataset?.status || "";
   document.body.dataset.songBackend = backend || "ace-step";
+  if (status === "cuda-required") {
+    setToolStatus("This backend needs CUDA. On CPU-only machines, use MusicGen for local sketch renders.");
+    return;
+  }
   if (backend === "musicgen" && vocalMode === "lyrics") {
     setToolStatus("MusicGen will turn lyrical requests into a wordless sketch. Use ACE-Step for sung lyric fidelity.");
     return;
@@ -1553,18 +1565,23 @@ async function previewAliceVoicebox() {
 async function hydrateSystem() {
   try {
     const data = await fetchJson("/api/system");
-    const gpu = data.cuda_available ? data.gpu_name || "CUDA GPU" : "CPU";
+    const gpu = data.cuda_available ? data.gpu_name || "CUDA GPU" : "CPU-only mode";
     const aceStep = data.ace_step?.running
       ? `ACE-Step ${data.ace_step.health?.loaded_model || data.ace_step.default_model} online`
       : data.ace_step?.available
         ? "ACE-Step ready"
+        : data.ace_step?.requires_cuda && !data.cuda_available
+          ? "ACE-Step needs CUDA"
         : "ACE-Step missing";
+    const musicgen = data.musicgen?.available
+      ? `MusicGen ${data.musicgen.device === "cpu" ? "CPU-ready" : "ready"}`
+      : "MusicGen unavailable";
     const ollamaCount = Array.isArray(data.ollama?.available_models) ? data.ollama.available_models.length : 0;
     const ollama = data.ollama?.available
       ? `Ollama ${data.ollama.default_model} ready${ollamaCount ? ` (${ollamaCount} model${ollamaCount === 1 ? "" : "s"})` : ""}`
       : "Astral AI unavailable";
     const stems = data.audio_tools?.available ? `Stem tools on ${data.audio_tools.device}` : "Stem tools unavailable";
-    const badge = `${gpu} | ${aceStep} | ${ollama} | ${stems}`;
+    const badge = `${gpu} | ${aceStep} | ${musicgen} | ${ollama} | ${stems}`;
     systemBadge.textContent = badge;
   } catch (error) {
     systemBadge.textContent = "Runtime detection failed";
