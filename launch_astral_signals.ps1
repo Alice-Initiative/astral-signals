@@ -20,6 +20,9 @@ function Set-IfMissing {
 }
 
 Set-IfMissing "ASTRAL_SIGNALS_HOME" "S:\AstralSignals"
+Set-IfMissing "ASTRAL_SIGNALS_HOST" "127.0.0.1"
+Set-IfMissing "ASTRAL_SIGNALS_ACCESS_HOST" "127.0.0.1"
+Set-IfMissing "ASTRAL_SIGNALS_PORT" "7860"
 Set-IfMissing "ASTRAL_SIGNALS_VENDOR_ROOT" "$env:ASTRAL_SIGNALS_HOME\vendors"
 Set-IfMissing "ASTRAL_SIGNALS_OLLAMA_BIN" "S:\Ollama\app\ollama.exe"
 Set-IfMissing "ASTRAL_SIGNALS_OLLAMA_MODELS" "S:\Ollama\.ollama\models"

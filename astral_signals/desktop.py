@@ -41,7 +41,7 @@ def set_windows_app_user_model_id() -> None:
 
 
 def base_url() -> str:
-    return f"http://{settings.host}:{settings.port}"
+    return f"http://{settings.access_host}:{settings.port}"
 
 
 def health_url() -> str:
@@ -93,7 +93,7 @@ class ManagedUvicornServer:
             self.started_here = False
             return
 
-        if is_port_open(settings.host, settings.port):
+        if is_port_open(settings.access_host, settings.port):
             raise RuntimeError(
                 f"Port {settings.port} is already in use, but it does not appear to be an Astral Signals server."
             )

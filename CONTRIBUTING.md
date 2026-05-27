@@ -4,8 +4,8 @@ Thanks for helping improve Astral Signals.
 
 ## Before you start
 
-- The main local workflow is currently tuned for `Windows + NVIDIA CUDA`
-- Heavy assets are expected to live outside the repo, usually under `S:\AstralSignals`
+- The main local workflow is most polished on `Windows + NVIDIA CUDA`, but the runtime also supports Linux
+- Heavy assets are expected to live outside the repo, usually under `S:\AstralSignals` on Windows or `~/AstralSignals` on Linux
 - Please avoid committing local caches, outputs, logs, or downloaded model weights
 
 ## Local setup
@@ -15,11 +15,21 @@ python -m pip install -e .
 .\launch_astral_signals.ps1
 ```
 
+```bash
+python -m pip install -e .
+./launch_astral_signals.sh
+```
+
 Fallback modes:
 
 ```powershell
 .\launch_astral_signals.ps1 -Browser
 .\launch_astral_signals.ps1 -ServerOnly
+```
+
+```bash
+./launch_astral_signals.sh --browser
+./launch_astral_signals.sh --server-only
 ```
 
 Optional backends:
@@ -29,6 +39,8 @@ Optional backends:
 .\bootstrap_songgeneration_backend.ps1
 .\bootstrap_heartmula_backend.ps1
 ```
+
+On Linux, install those optional repos and their venvs manually, then point Astral at them with the relevant `ASTRAL_SIGNALS_*` environment variables.
 
 ## Contribution guidelines
 

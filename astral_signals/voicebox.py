@@ -11,7 +11,7 @@ from uuid import uuid4
 from urllib import error, request
 from urllib.parse import urlparse
 
-from astral_signals.config import settings
+from astral_signals.config import resolve_venv_binary, settings
 
 
 class VoiceboxError(RuntimeError):
@@ -22,7 +22,7 @@ class VoiceboxClient:
     def __init__(self) -> None:
         self.base_url = settings.voicebox_host
         self.repo_dir = settings.voicebox_repo
-        self.backend_python = self.repo_dir / "backend" / "venv" / "Scripts" / "python.exe"
+        self.backend_python = resolve_venv_binary(self.repo_dir / "backend" / "venv", "python")
         self.data_dir = settings.storage_root / "voicebox-data"
         self.models_dir = settings.cache_dir / "voicebox-hf"
         self.temp_dir = settings.storage_root / "cache" / "tmp"

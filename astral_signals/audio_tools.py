@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import math
 from pathlib import Path
 import re
 from typing import Any
@@ -66,6 +67,22 @@ def _line_weight(value: str) -> float:
 class LyricsSection:
     label: str
     lines: list[str]
+
+
+@dataclass
+class MixTrack:
+    path: Path
+    label: str
+    role: str
+    gain_db: float = 0.0
+    pan: float = 0.0
+    mute: bool = False
+    solo: bool = False
+    start_seconds: float = 0.0
+    trim_in_seconds: float = 0.0
+    trim_out_seconds: float = 0.0
+    fade_in_seconds: float = 0.0
+    fade_out_seconds: float = 0.0
 
 
 class AudioTools:
@@ -198,6 +215,140 @@ class AudioTools:
             "instrumental_gain_db": instrumental_gain_db,
         }
 
+    def mix_assist(
+        self,
+        *,
+        tracks: list[dict[str, Any]],
+        title: str = "",
+    ) -> dict[str, Any]:
+        prepared = [self._coerce_mix_track(track, index) for index, track in enumerate(tracks)]
+        if not prepared:
+            raise AudioToolsError("Add at least one track before asking Alice to shape the mix.")
+
+        suggestions = [self._suggest_mix_track(track, index) for index, track in enumerate(prepared)]
+        center_count = sum(1 for item in suggestions if abs(item.pan) < 10)
+        wide_count = sum(1 for item in suggestions if abs(item.pan) >= 18)
+
+        return {
+            "title": title.strip() or "Mix Lab session",
+            "summary": (
+                f"Alice Mix Assist centered {center_count} anchor track"
+                f"{'' if center_count == 1 else 's'} and widened {wide_count} support layer"
+                f"{'' if wide_count == 1 else 's'} so the lead stays clear while the arrangement opens around it."
+            ),
+            "tracks": [self._serialize_mix_track(track) for track in suggestions],
+        }
+
+    def inspect_mix_track(
+        self,
+        *,
+        audio_path: str,
+        label: str = "",
+        role: str = "",
+    ) -> dict[str, Any]:
+        path = self._resolve_audio_path(audio_path)
+        samples, sample_rate = self._load_audio(path)
+        resolved_role = self._infer_mix_role(explicit_role=role.strip(), label=label.strip(), path=path)
+        peak = float(np.max(np.abs(samples))) if samples.size else 0.0
+        return {
+            "path": str(path),
+            "label": label.strip() or path.stem,
+            "role": resolved_role,
+            "duration_seconds": round(samples.shape[0] / float(sample_rate), 2),
+            "sample_rate": int(sample_rate),
+            "channels": int(samples.shape[1] if samples.ndim > 1 else 1),
+            "peak": round(peak, 4),
+        }
+
+    def render_mix_session(
+        self,
+        *,
+        tracks: list[dict[str, Any]],
+        title: str = "",
+        normalize_output: bool = True,
+    ) -> dict[str, Any]:
+        prepared = [self._coerce_mix_track(track, index) for index, track in enumerate(tracks)]
+        if not prepared:
+            raise AudioToolsError("Add at least one track to Mix Lab before bouncing the session.")
+
+        active_tracks = [track for track in prepared if not track.mute]
+        if any(track.solo for track in prepared):
+            active_tracks = [track for track in active_tracks if track.solo]
+
+        if not active_tracks:
+            raise AudioToolsError("No active tracks remain. Turn off mute or choose at least one solo track.")
+
+        sample_rates: list[int] = []
+        loaded_tracks: list[tuple[MixTrack, torch.Tensor, int]] = []
+        for track in active_tracks:
+            samples, sample_rate = self._load_audio(track.path)
+            sample_rates.append(sample_rate)
+            loaded_tracks.append((track, torch.from_numpy(samples.T.copy()), sample_rate))
+
+        target_sample_rate = max(sample_rates) if sample_rates else TARGET_STEM_SAMPLE_RATE
+        staged_tracks: list[dict[str, Any]] = []
+        target_length = 0
+
+        for track, waveform, sample_rate in loaded_tracks:
+            if sample_rate != target_sample_rate:
+                waveform = F.resample(waveform, sample_rate, target_sample_rate)
+                sample_rate = target_sample_rate
+
+            waveform = self._trim_waveform(track=track, waveform=waveform, sample_rate=sample_rate)
+            waveform = self._apply_fades(track=track, waveform=waveform, sample_rate=sample_rate)
+            waveform = self._apply_pan_and_gain(waveform, gain_db=track.gain_db, pan=track.pan)
+
+            offset_frames = max(0, int(round(track.start_seconds * sample_rate)))
+            target_length = max(target_length, offset_frames + waveform.shape[-1])
+            staged_tracks.append(
+                {
+                    "track": track,
+                    "waveform": waveform,
+                    "offset_frames": offset_frames,
+                }
+            )
+
+        mixed = torch.zeros(2, target_length, dtype=torch.float32)
+        for item in staged_tracks:
+            waveform = item["waveform"]
+            start = item["offset_frames"]
+            end = start + waveform.shape[-1]
+            mixed[:, start:end] += waveform
+
+        peak_before = float(mixed.abs().max().item()) if mixed.numel() else 0.0
+        normalize_applied = False
+        if normalize_output and peak_before > 1e-6:
+            ceiling = 0.98
+            if peak_before > ceiling:
+                mixed = mixed / peak_before * ceiling
+                normalize_applied = True
+        elif peak_before > 0.995:
+            mixed = mixed / peak_before * 0.995
+
+        peak_after = float(mixed.abs().max().item()) if mixed.numel() else 0.0
+
+        label = title.strip() or "mix-lab-session"
+        job_dir = self._create_output_dir("mixlab", label)
+        output_path = job_dir / "mixdown.wav"
+        sf.write(output_path, mixed.transpose(0, 1).cpu().numpy(), target_sample_rate, subtype="FLOAT")
+
+        mix_tracks = [item["track"] for item in staged_tracks]
+        return {
+            "job_dir": str(job_dir),
+            "path": str(output_path),
+            "url": _path_to_url(output_path),
+            "sample_rate": target_sample_rate,
+            "duration_seconds": round(target_length / float(target_sample_rate), 2),
+            "normalize_output": normalize_output,
+            "normalize_applied": normalize_applied,
+            "peak_before": round(peak_before, 4),
+            "peak_after": round(peak_after, 4),
+            "track_count": len(prepared),
+            "active_track_count": len(mix_tracks),
+            "summary": self._mix_session_summary(mix_tracks, normalize_applied),
+            "tracks": [self._serialize_mix_track(track) for track in mix_tracks],
+        }
+
     def match_lyrics_to_audio(
         self,
         *,
@@ -259,7 +410,8 @@ class AudioTools:
         if not value:
             raise AudioToolsError("Audio path is required.")
         if value.startswith("/outputs/"):
-            value = str(settings.output_dir / value.removeprefix("/outputs/").replace("/", "\\"))
+            relative = Path(value.removeprefix("/outputs/"))
+            value = str(settings.output_dir.joinpath(*relative.parts))
         path = Path(value)
         if not path.exists():
             raise AudioToolsError(f"Audio file not found: {path}")
@@ -334,6 +486,204 @@ class AudioTools:
         if waveform.shape[-1] >= target_length:
             return waveform[:, :target_length]
         return torch.nn.functional.pad(waveform, (0, target_length - waveform.shape[-1]))
+
+    def _coerce_mix_track(self, payload: dict[str, Any], index: int) -> MixTrack:
+        path = self._resolve_audio_path(str(payload.get("path", "")))
+        label = str(payload.get("label", "")).strip() or path.stem or f"Track {index + 1}"
+        role = self._infer_mix_role(
+            explicit_role=str(payload.get("role", "")).strip(),
+            label=label,
+            path=path,
+        )
+        return MixTrack(
+            path=path,
+            label=label,
+            role=role,
+            gain_db=self._clamp_number(payload.get("gain_db"), -24.0, 24.0),
+            pan=self._clamp_number(payload.get("pan"), -100.0, 100.0),
+            mute=bool(payload.get("mute", False)),
+            solo=bool(payload.get("solo", False)),
+            start_seconds=self._clamp_number(payload.get("start_seconds"), 0.0, 1200.0),
+            trim_in_seconds=self._clamp_number(payload.get("trim_in_seconds"), 0.0, 1200.0),
+            trim_out_seconds=self._clamp_number(payload.get("trim_out_seconds"), 0.0, 1200.0),
+            fade_in_seconds=self._clamp_number(payload.get("fade_in_seconds"), 0.0, 30.0),
+            fade_out_seconds=self._clamp_number(payload.get("fade_out_seconds"), 0.0, 30.0),
+        )
+
+    def _clamp_number(self, value: Any, minimum: float, maximum: float) -> float:
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            parsed = minimum if minimum > 0 else 0.0
+        return max(minimum, min(maximum, parsed))
+
+    def _infer_mix_role(self, *, explicit_role: str, label: str, path: Path) -> str:
+        if explicit_role and explicit_role != "auto":
+            return explicit_role
+
+        value = f"{label} {path.stem}".lower()
+        if any(token in value for token in ("lead vocal", "vocals", "vocal", "lead")):
+            return "vocals"
+        if any(token in value for token in ("harmony", "harm", "backing vocal", "backing")):
+            return "harmony"
+        if any(token in value for token in ("double", "adlib", "ad-lib")):
+            return "doubles"
+        if "drum" in value or "kick" in value or "snare" in value:
+            return "drums"
+        if "bass" in value or "sub" in value:
+            return "bass"
+        if "pad" in value:
+            return "pad"
+        if "fx" in value or "sfx" in value or "effect" in value:
+            return "fx"
+        if "ambience" in value or "atmo" in value or "atmos" in value:
+            return "ambience"
+        if "guitar" in value:
+            return "guitar"
+        if "piano" in value or "keys" in value:
+            return "piano"
+        if "synth" in value or "arp" in value:
+            return "synth"
+        if "melody" in value or "hook" in value:
+            return "melody"
+        if "spoken" in value or "narrat" in value:
+            return "spoken"
+        if "instrumental" in value or "music" in value or "mix" in value:
+            return "instrumental"
+        return "other"
+
+    def _suggest_mix_track(self, track: MixTrack, index: int) -> MixTrack:
+        role = track.role
+        direction = -1 if index % 2 == 0 else 1
+        overrides: dict[str, float] = {
+            "gain_db": 0.0,
+            "pan": 0.0,
+            "fade_in_seconds": track.fade_in_seconds,
+            "fade_out_seconds": track.fade_out_seconds,
+        }
+
+        if role in {"vocals", "spoken"}:
+            overrides["gain_db"] = 1.5 if role == "vocals" else -0.5
+            overrides["pan"] = 0.0
+        elif role in {"harmony", "doubles"}:
+            overrides["gain_db"] = -2.5 if role == "harmony" else -3.2
+            overrides["pan"] = 28.0 * direction
+        elif role == "drums":
+            overrides["gain_db"] = -1.5
+            overrides["pan"] = 0.0
+        elif role == "bass":
+            overrides["gain_db"] = -2.5
+            overrides["pan"] = 0.0
+        elif role in {"instrumental", "piano", "guitar"}:
+            overrides["gain_db"] = -3.5
+            overrides["pan"] = 0.0 if role == "instrumental" else 12.0 * direction
+        elif role in {"synth", "melody"}:
+            overrides["gain_db"] = -2.0 if role == "melody" else -3.0
+            overrides["pan"] = 14.0 * direction
+        elif role in {"pad", "ambience"}:
+            overrides["gain_db"] = -5.5 if role == "pad" else -7.0
+            overrides["pan"] = 24.0 * direction
+        elif role == "fx":
+            overrides["gain_db"] = -7.5
+            overrides["pan"] = 36.0 * direction
+            overrides["fade_in_seconds"] = max(track.fade_in_seconds, 0.08)
+            overrides["fade_out_seconds"] = max(track.fade_out_seconds, 0.12)
+        else:
+            overrides["gain_db"] = -3.0
+            overrides["pan"] = 8.0 * direction
+
+        track.gain_db = round(overrides["gain_db"], 2)
+        track.pan = round(overrides["pan"], 2)
+        track.fade_in_seconds = round(float(overrides["fade_in_seconds"]), 2)
+        track.fade_out_seconds = round(float(overrides["fade_out_seconds"]), 2)
+        return track
+
+    def _trim_waveform(
+        self,
+        *,
+        track: MixTrack,
+        waveform: torch.Tensor,
+        sample_rate: int,
+    ) -> torch.Tensor:
+        start = int(round(track.trim_in_seconds * sample_rate))
+        end = waveform.shape[-1] - int(round(track.trim_out_seconds * sample_rate))
+        end = max(start + 1, end)
+        trimmed = waveform[:, start:end]
+        if trimmed.shape[-1] <= 1:
+            raise AudioToolsError(
+                f"{track.label} trimmed down to silence. Reduce trim-in or trim-out before bouncing the mix."
+            )
+        return trimmed
+
+    def _apply_fades(
+        self,
+        *,
+        track: MixTrack,
+        waveform: torch.Tensor,
+        sample_rate: int,
+    ) -> torch.Tensor:
+        total_frames = waveform.shape[-1]
+        if total_frames <= 1:
+            return waveform
+
+        fade_in_frames = min(total_frames, int(round(track.fade_in_seconds * sample_rate)))
+        fade_out_frames = min(total_frames, int(round(track.fade_out_seconds * sample_rate)))
+
+        if fade_in_frames > 1:
+            waveform[:, :fade_in_frames] *= torch.linspace(0.0, 1.0, fade_in_frames, dtype=waveform.dtype)
+        if fade_out_frames > 1:
+            waveform[:, -fade_out_frames:] *= torch.linspace(1.0, 0.0, fade_out_frames, dtype=waveform.dtype)
+
+        return waveform
+
+    def _apply_pan_and_gain(
+        self,
+        waveform: torch.Tensor,
+        *,
+        gain_db: float,
+        pan: float,
+    ) -> torch.Tensor:
+        gain = _db_to_gain(gain_db)
+        pan_norm = max(-1.0, min(1.0, pan / 100.0))
+        angle = (pan_norm + 1.0) * (math.pi / 4.0)
+        left_gain = math.cos(angle)
+        right_gain = math.sin(angle)
+        stereo = waveform.clone()
+        stereo[0] *= gain * left_gain
+        stereo[1] *= gain * right_gain
+        return stereo
+
+    def _serialize_mix_track(self, track: MixTrack) -> dict[str, Any]:
+        return {
+            "path": str(track.path),
+            "label": track.label,
+            "role": track.role,
+            "gain_db": round(track.gain_db, 2),
+            "pan": round(track.pan, 2),
+            "mute": track.mute,
+            "solo": track.solo,
+            "start_seconds": round(track.start_seconds, 3),
+            "trim_in_seconds": round(track.trim_in_seconds, 3),
+            "trim_out_seconds": round(track.trim_out_seconds, 3),
+            "fade_in_seconds": round(track.fade_in_seconds, 3),
+            "fade_out_seconds": round(track.fade_out_seconds, 3),
+        }
+
+    def _mix_session_summary(self, tracks: list[MixTrack], normalize_applied: bool) -> str:
+        roles = [track.role for track in tracks]
+        lead_count = sum(1 for role in roles if role in {"vocals", "spoken"})
+        support_count = sum(1 for role in roles if role in {"harmony", "doubles", "pad", "fx", "ambience"})
+        low_end_count = sum(1 for role in roles if role in {"bass", "drums"})
+        bits = [
+            f"{len(tracks)} active track{'' if len(tracks) == 1 else 's'}",
+            f"{lead_count} lead-focused layer{'' if lead_count == 1 else 's'}",
+            f"{support_count} support texture{'' if support_count == 1 else 's'}",
+            f"{low_end_count} rhythm or low-end anchor{'' if low_end_count == 1 else 's'}",
+        ]
+        summary = "Mix Lab bounced a session with " + ", ".join(bits) + "."
+        if normalize_applied:
+            summary += " A safety normalize pass kept the bounce from clipping."
+        return summary
 
     def _create_output_dir(self, prefix: str, label: str) -> Path:
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")

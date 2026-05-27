@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from astral_signals.config import settings
+from astral_signals.config import resolve_venv_binary, settings
 
 
 class HeartMuLaError(RuntimeError):
@@ -23,7 +23,7 @@ class HeartMuLaClient:
 
     @property
     def python_binary(self) -> Path:
-        return self.venv_dir / "Scripts" / "python.exe"
+        return resolve_venv_binary(self.venv_dir, "python")
 
     @property
     def worker_script(self) -> Path:
@@ -66,15 +66,15 @@ class HeartMuLaClient:
     def ensure_ready(self) -> None:
         if not self.repo_dir.exists():
             raise HeartMuLaError(
-                f"HeartMuLa repo is missing at {self.repo_dir}. Run bootstrap_optional_engines.ps1 first."
+                f"HeartMuLa repo is missing at {self.repo_dir}. Sync the optional engines repo bundle first."
             )
         if not self.python_binary.exists():
             raise HeartMuLaError(
-                f"HeartMuLa venv is missing at {self.python_binary}. Run bootstrap_heartmula_backend.ps1 first."
+                f"HeartMuLa venv is missing at {self.python_binary}. Install the HeartMuLa backend in that repo first."
             )
         if not self._checkpoint_ready():
             raise HeartMuLaError(
-                f"HeartMuLa checkpoints are missing in {self.ckpt_dir}. Run bootstrap_heartmula_backend.ps1 to download them."
+                f"HeartMuLa checkpoints are missing in {self.ckpt_dir}. Download or point Astral at the checkpoints first."
             )
         if not self.worker_script.exists():
             raise HeartMuLaError(f"HeartMuLa worker script is missing at {self.worker_script}.")

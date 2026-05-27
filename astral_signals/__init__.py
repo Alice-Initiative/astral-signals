@@ -6,7 +6,16 @@ import os
 from pathlib import Path
 
 
-_storage_root = Path(os.getenv("ASTRAL_SIGNALS_HOME", r"S:\AstralSignals"))
+def _default_storage_root() -> Path:
+    configured = (os.getenv("ASTRAL_SIGNALS_HOME") or "").strip()
+    if configured:
+        return Path(configured).expanduser()
+    if os.name == "nt":
+        return Path(r"S:\AstralSignals")
+    return Path.home() / "AstralSignals"
+
+
+_storage_root = _default_storage_root()
 _hf_home = _storage_root / "cache" / "hf-home"
 _hf_hub_cache = _storage_root / "cache" / "huggingface"
 _torch_home = _storage_root / "cache" / "torch"

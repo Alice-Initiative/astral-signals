@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from astral_signals.config import settings
+from astral_signals.config import resolve_venv_binary, settings
 
 SONGGENERATION_MODEL_LIBRARY: list[dict[str, Any]] = [
     {
@@ -78,7 +78,7 @@ class SongGenerationClient:
 
     @property
     def python_binary(self) -> Path:
-        return self.venv_dir / "Scripts" / "python.exe"
+        return resolve_venv_binary(self.venv_dir, "python")
 
     @property
     def worker_script(self) -> Path:
@@ -179,15 +179,15 @@ class SongGenerationClient:
     def ensure_ready(self, model_id: str) -> None:
         if not self.repo_dir.exists():
             raise SongGenerationError(
-                f"SongGeneration repo is missing at {self.repo_dir}. Run bootstrap_optional_engines.ps1 first."
+                f"SongGeneration repo is missing at {self.repo_dir}. Sync the optional engines repo bundle first."
             )
         if not self.python_binary.exists():
             raise SongGenerationError(
-                f"SongGeneration venv is missing at {self.python_binary}. Run bootstrap_songgeneration_backend.ps1 first."
+                f"SongGeneration venv is missing at {self.python_binary}. Install the SongGeneration backend in that repo first."
             )
         if not self._runtime_ready():
             raise SongGenerationError(
-                f"SongGeneration runtime assets are missing in {self.runtime_dir}. Run bootstrap_songgeneration_backend.ps1 first."
+                f"SongGeneration runtime assets are missing in {self.runtime_dir}. Download or point Astral at the runtime assets first."
             )
         if not self.worker_script.exists():
             raise SongGenerationError(f"SongGeneration worker script is missing at {self.worker_script}.")
@@ -195,7 +195,7 @@ class SongGenerationClient:
             spec = self._resolve_model_spec(model_id)
             raise SongGenerationError(
                 f"SongGeneration checkpoint '{spec['id']}' is missing in {self._model_dir(model_id)}. "
-                "Run bootstrap_songgeneration_backend.ps1 or download that checkpoint manually."
+                "Download that checkpoint or point Astral at an installed SongGeneration model first."
             )
         self._ensure_runtime_links()
 

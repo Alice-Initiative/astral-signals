@@ -5,6 +5,38 @@ import os
 from pathlib import Path
 import sys
 
+IS_WINDOWS = os.name == "nt"
+
+
+def _env_path(name: str, default: str | Path) -> Path:
+    configured = (os.getenv(name) or "").strip()
+    return Path(configured).expanduser() if configured else Path(default).expanduser()
+
+
+def resolve_venv_binary(venv_dir: Path, executable: str) -> Path:
+    suffix = ".exe" if IS_WINDOWS else ""
+    script_dir = "Scripts" if IS_WINDOWS else "bin"
+    return venv_dir / script_dir / f"{executable}{suffix}"
+
+
+def default_storage_root() -> Path:
+    if IS_WINDOWS:
+        return _env_path("ASTRAL_SIGNALS_HOME", r"S:\AstralSignals")
+    return _env_path("ASTRAL_SIGNALS_HOME", Path.home() / "AstralSignals")
+
+
+def default_ollama_binary() -> Path:
+    if IS_WINDOWS:
+        return _env_path("ASTRAL_SIGNALS_OLLAMA_BIN", r"S:\Ollama\app\ollama.exe")
+    return _env_path("ASTRAL_SIGNALS_OLLAMA_BIN", "ollama")
+
+
+def default_ollama_models_dir() -> Path:
+    if IS_WINDOWS:
+        return _env_path("ASTRAL_SIGNALS_OLLAMA_MODELS", r"S:\Ollama\.ollama\models")
+    return _env_path("ASTRAL_SIGNALS_OLLAMA_MODELS", Path.home() / ".ollama" / "models")
+
+
 PACKAGE_ROOT = Path(__file__).resolve().parent
 if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
     PROJECT_ROOT = Path(sys._MEIPASS)
@@ -12,10 +44,10 @@ if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
 else:
     PROJECT_ROOT = PACKAGE_ROOT.parent
     STATIC_DIR = PACKAGE_ROOT / "static"
-DEFAULT_STORAGE_ROOT = Path(os.getenv("ASTRAL_SIGNALS_HOME", r"S:\AstralSignals"))
-DEFAULT_VENDOR_ROOT = Path(os.getenv("ASTRAL_SIGNALS_VENDOR_ROOT", str(DEFAULT_STORAGE_ROOT / "vendors")))
-DEFAULT_OLLAMA_BIN = Path(os.getenv("ASTRAL_SIGNALS_OLLAMA_BIN", r"S:\Ollama\app\ollama.exe"))
-DEFAULT_OLLAMA_MODELS = Path(os.getenv("ASTRAL_SIGNALS_OLLAMA_MODELS", r"S:\Ollama\.ollama\models"))
+DEFAULT_STORAGE_ROOT = default_storage_root()
+DEFAULT_VENDOR_ROOT = _env_path("ASTRAL_SIGNALS_VENDOR_ROOT", DEFAULT_STORAGE_ROOT / "vendors")
+DEFAULT_OLLAMA_BIN = default_ollama_binary()
+DEFAULT_OLLAMA_MODELS = default_ollama_models_dir()
 DEFAULT_OLLAMA_HOST = os.getenv("ASTRAL_SIGNALS_OLLAMA_HOST", "http://127.0.0.1:11435").rstrip("/")
 DEFAULT_OLLAMA_MODEL = os.getenv("ASTRAL_SIGNALS_OLLAMA_MODEL", "qwen3:4b")
 DEFAULT_OLLAMA_TIMEOUT = int(os.getenv("ASTRAL_SIGNALS_OLLAMA_TIMEOUT", "240"))
@@ -24,14 +56,13 @@ DEFAULT_TRANSLATION_MODEL = os.getenv(
     "ASTRAL_SIGNALS_TRANSLATION_MODEL",
     "facebook/nllb-200-distilled-600M",
 )
-DEFAULT_ACE_STEP_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_ACE_STEP_REPO", r"S:\AstralSignals\vendors\ACE-Step-1.5")
+DEFAULT_ACE_STEP_REPO = _env_path(
+    "ASTRAL_SIGNALS_ACE_STEP_REPO",
+    DEFAULT_VENDOR_ROOT / "ACE-Step-1.5",
 )
-DEFAULT_ACE_STEP_API = Path(
-    os.getenv(
-        "ASTRAL_SIGNALS_ACE_STEP_API",
-        str(DEFAULT_ACE_STEP_REPO / ".venv" / "Scripts" / "acestep-api.exe"),
-    )
+DEFAULT_ACE_STEP_API = _env_path(
+    "ASTRAL_SIGNALS_ACE_STEP_API",
+    resolve_venv_binary(DEFAULT_ACE_STEP_REPO / ".venv", "acestep-api"),
 )
 DEFAULT_ACE_STEP_HOST = os.getenv("ASTRAL_SIGNALS_ACE_STEP_HOST", "http://127.0.0.1:8001").rstrip("/")
 DEFAULT_ACE_STEP_MODEL = os.getenv("ASTRAL_SIGNALS_ACE_STEP_MODEL", "acestep-v15-turbo")
@@ -47,56 +78,44 @@ DEFAULT_ACE_STEP_DISABLE_THINKING_AFTER = int(
     os.getenv("ASTRAL_SIGNALS_ACE_STEP_DISABLE_THINKING_AFTER", "120")
 )
 DEFAULT_ACE_STEP_QUEUE_PATIENCE = int(os.getenv("ASTRAL_SIGNALS_ACE_STEP_QUEUE_PATIENCE", "180"))
-DEFAULT_ACE_STEP_CHECKPOINTS = Path(
-    os.getenv(
-        "ASTRAL_SIGNALS_ACE_STEP_CHECKPOINTS",
-        str(DEFAULT_STORAGE_ROOT / "models" / "ace-step"),
-    )
+DEFAULT_ACE_STEP_CHECKPOINTS = _env_path(
+    "ASTRAL_SIGNALS_ACE_STEP_CHECKPOINTS",
+    DEFAULT_STORAGE_ROOT / "models" / "ace-step",
 )
-DEFAULT_VOICEBOX_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_VOICEBOX_REPO", r"S:\AstralSignals\vendors\voicebox")
-)
+DEFAULT_VOICEBOX_REPO = _env_path("ASTRAL_SIGNALS_VOICEBOX_REPO", DEFAULT_VENDOR_ROOT / "voicebox")
 DEFAULT_VOICEBOX_HOST = os.getenv("ASTRAL_SIGNALS_VOICEBOX_HOST", "http://127.0.0.1:17493").rstrip("/")
-DEFAULT_HEARTMULA_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_HEARTMULA_REPO", str(DEFAULT_VENDOR_ROOT / "heartlib"))
-)
-DEFAULT_HEARTMULA_VENV = Path(
-    os.getenv(
-        "ASTRAL_SIGNALS_HEARTMULA_VENV",
-        str(DEFAULT_HEARTMULA_REPO / ".venv"),
-    )
-)
-DEFAULT_HEARTMULA_CKPT = Path(
-    os.getenv(
-        "ASTRAL_SIGNALS_HEARTMULA_CKPT",
-        str(DEFAULT_STORAGE_ROOT / "models" / "heartmula" / "ckpt"),
-    )
+DEFAULT_APP_HOST = os.getenv("ASTRAL_SIGNALS_HOST", "127.0.0.1").strip() or "127.0.0.1"
+DEFAULT_APP_PORT = int(os.getenv("ASTRAL_SIGNALS_PORT", "7860"))
+DEFAULT_APP_ACCESS_HOST = os.getenv(
+    "ASTRAL_SIGNALS_ACCESS_HOST",
+    "127.0.0.1" if DEFAULT_APP_HOST in {"0.0.0.0", "::"} else DEFAULT_APP_HOST,
+).strip() or "127.0.0.1"
+DEFAULT_HEARTMULA_REPO = _env_path("ASTRAL_SIGNALS_HEARTMULA_REPO", DEFAULT_VENDOR_ROOT / "heartlib")
+DEFAULT_HEARTMULA_VENV = _env_path("ASTRAL_SIGNALS_HEARTMULA_VENV", DEFAULT_HEARTMULA_REPO / ".venv")
+DEFAULT_HEARTMULA_CKPT = _env_path(
+    "ASTRAL_SIGNALS_HEARTMULA_CKPT",
+    DEFAULT_STORAGE_ROOT / "models" / "heartmula" / "ckpt",
 )
 DEFAULT_HEARTMULA_MODEL = os.getenv(
     "ASTRAL_SIGNALS_HEARTMULA_MODEL",
     "HeartMuLa-oss-3B-happy-new-year",
 )
 DEFAULT_HEARTMULA_VERSION = os.getenv("ASTRAL_SIGNALS_HEARTMULA_VERSION", "3B")
-DEFAULT_SONGGENERATION_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_SONGGENERATION_REPO", str(DEFAULT_VENDOR_ROOT / "SongGeneration"))
+DEFAULT_SONGGENERATION_REPO = _env_path(
+    "ASTRAL_SIGNALS_SONGGENERATION_REPO",
+    DEFAULT_VENDOR_ROOT / "SongGeneration",
 )
-DEFAULT_SONGGENERATION_VENV = Path(
-    os.getenv(
-        "ASTRAL_SIGNALS_SONGGENERATION_VENV",
-        str(DEFAULT_SONGGENERATION_REPO / ".venv"),
-    )
+DEFAULT_SONGGENERATION_VENV = _env_path(
+    "ASTRAL_SIGNALS_SONGGENERATION_VENV",
+    DEFAULT_SONGGENERATION_REPO / ".venv",
 )
-DEFAULT_SONGGENERATION_RUNTIME = Path(
-    os.getenv(
-        "ASTRAL_SIGNALS_SONGGENERATION_RUNTIME",
-        str(DEFAULT_STORAGE_ROOT / "models" / "songgeneration" / "runtime"),
-    )
+DEFAULT_SONGGENERATION_RUNTIME = _env_path(
+    "ASTRAL_SIGNALS_SONGGENERATION_RUNTIME",
+    DEFAULT_STORAGE_ROOT / "models" / "songgeneration" / "runtime",
 )
-DEFAULT_SONGGENERATION_MODELS = Path(
-    os.getenv(
-        "ASTRAL_SIGNALS_SONGGENERATION_MODELS",
-        str(DEFAULT_STORAGE_ROOT / "models" / "songgeneration"),
-    )
+DEFAULT_SONGGENERATION_MODELS = _env_path(
+    "ASTRAL_SIGNALS_SONGGENERATION_MODELS",
+    DEFAULT_STORAGE_ROOT / "models" / "songgeneration",
 )
 DEFAULT_SONGGENERATION_MODEL = os.getenv(
     "ASTRAL_SIGNALS_SONGGENERATION_MODEL",
@@ -113,21 +132,14 @@ DEFAULT_SONGGENERATION_USE_FLASH_ATTN = os.getenv(
     "ASTRAL_SIGNALS_SONGGENERATION_USE_FLASH_ATTN",
     "false",
 ).strip().lower() in {"1", "true", "yes", "on"}
-DEFAULT_YUE_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_YUE_REPO", str(DEFAULT_VENDOR_ROOT / "YuE"))
+DEFAULT_YUE_REPO = _env_path("ASTRAL_SIGNALS_YUE_REPO", DEFAULT_VENDOR_ROOT / "YuE")
+DEFAULT_AUDIOCRAFT_REPO = _env_path("ASTRAL_SIGNALS_AUDIOCRAFT_REPO", DEFAULT_VENDOR_ROOT / "audiocraft")
+DEFAULT_STABLE_AUDIO_REPO = _env_path(
+    "ASTRAL_SIGNALS_STABLE_AUDIO_REPO",
+    DEFAULT_VENDOR_ROOT / "stable-audio-tools",
 )
-DEFAULT_AUDIOCRAFT_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_AUDIOCRAFT_REPO", str(DEFAULT_VENDOR_ROOT / "audiocraft"))
-)
-DEFAULT_STABLE_AUDIO_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_STABLE_AUDIO_REPO", str(DEFAULT_VENDOR_ROOT / "stable-audio-tools"))
-)
-DEFAULT_SOULX_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_SOULX_REPO", str(DEFAULT_VENDOR_ROOT / "SoulX-Singer"))
-)
-DEFAULT_DIFFSINGER_REPO = Path(
-    os.getenv("ASTRAL_SIGNALS_DIFFSINGER_REPO", str(DEFAULT_VENDOR_ROOT / "DiffSinger"))
-)
+DEFAULT_SOULX_REPO = _env_path("ASTRAL_SIGNALS_SOULX_REPO", DEFAULT_VENDOR_ROOT / "SoulX-Singer")
+DEFAULT_DIFFSINGER_REPO = _env_path("ASTRAL_SIGNALS_DIFFSINGER_REPO", DEFAULT_VENDOR_ROOT / "DiffSinger")
 DEFAULT_VOICE_CLONE_ANCHOR_STRENGTH = float(
     os.getenv("ASTRAL_SIGNALS_VOICE_CLONE_ANCHOR_STRENGTH", "0.18")
 )
@@ -144,8 +156,9 @@ class Settings:
     torch_cache_dir: Path = DEFAULT_STORAGE_ROOT / "cache" / "torch"
     logs_dir: Path = DEFAULT_STORAGE_ROOT / "logs"
     static_dir: Path = STATIC_DIR
-    host: str = "127.0.0.1"
-    port: int = 7860
+    host: str = DEFAULT_APP_HOST
+    access_host: str = DEFAULT_APP_ACCESS_HOST
+    port: int = DEFAULT_APP_PORT
     vendor_root: Path = DEFAULT_VENDOR_ROOT
     ollama_binary: Path = DEFAULT_OLLAMA_BIN
     ollama_models_dir: Path = DEFAULT_OLLAMA_MODELS

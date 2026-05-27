@@ -1,9 +1,9 @@
 # Astral Signals
 
-Astral Signals is a local-first desktop song studio for Windows. It opens as a native app window by default, while still keeping its local web stack under the hood for rendering, draft management, multilingual lyrics, singer routing, cloned voice previews, stem workflows, and Alice-driven orchestration.
+Astral Signals is a local-first desktop song studio for Windows and Linux. It opens as a native app window by default when the desktop shell is available, while still keeping its local web stack under the hood for rendering, draft management, multilingual lyrics, singer routing, cloned voice previews, stem workflows, and Alice-driven orchestration.
 
 [![Python](https://img.shields.io/badge/python-3.11%2B-7aa2ff)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/platform-Windows-8bd5ff)](https://www.microsoft.com/windows)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%2B%20Linux-8bd5ff)](https://www.python.org/)
 [![Local First](https://img.shields.io/badge/local-first-f7a8ff)](https://github.com/Alice-Initiative/astral-signals)
 [![License](https://img.shields.io/badge/license-MIT-9df0b8)](LICENSE)
 
@@ -20,7 +20,7 @@ Astral Signals is a local-first desktop song studio for Windows. It opens as a n
 - Split vocals and instrumentals, remix stems, and match lyrics to arrangement timing
 - Compare multiple render engines from one mapped prompt
 
-Heavy assets default to `S:\AstralSignals`, so large model downloads and audio outputs stay off your system drive unless you override them.
+Heavy assets default to `S:\AstralSignals` on Windows and `~/AstralSignals` on Linux, so large model downloads and audio outputs stay off your repo unless you override them.
 
 ## Current stack
 
@@ -74,19 +74,33 @@ python -m pip install -e .
 
 ### 2. Point Astral at your preferred storage root if needed
 
-The default is already `S:\AstralSignals`. If you want a different root:
+Windows default:
 
 ```powershell
 $env:ASTRAL_SIGNALS_HOME = "S:\AstralSignals"
 ```
 
+Linux default:
+
+```bash
+export ASTRAL_SIGNALS_HOME="$HOME/AstralSignals"
+```
+
 ### 3. Launch the app
+
+Windows:
 
 ```powershell
 .\launch_astral_signals.ps1
 ```
 
-That opens Astral in its desktop window.
+Linux:
+
+```bash
+./launch_astral_signals.sh
+```
+
+That opens Astral in its desktop window when the local desktop shell is available.
 
 Fallback launch modes:
 
@@ -95,27 +109,72 @@ Fallback launch modes:
 .\launch_astral_signals.ps1 -ServerOnly
 ```
 
+```bash
+./launch_astral_signals.sh --browser
+./launch_astral_signals.sh --server-only
+```
+
 The browser fallback uses [http://127.0.0.1:7860](http://127.0.0.1:7860).
+
+## Remote agents and other machines
+
+Astral is local-first by default. Out of the box it binds to `127.0.0.1`, so only the same machine can reach it.
+
+If another machine or agent should call the shared Astral host on your LAN or VPN, start it with:
+
+```powershell
+$env:ASTRAL_SIGNALS_HOST = "0.0.0.0"
+$env:ASTRAL_SIGNALS_ACCESS_HOST = "127.0.0.1"
+$env:ASTRAL_SIGNALS_PORT = "7860"
+.\launch_astral_signals.ps1 -ServerOnly
+```
+
+```bash
+export ASTRAL_SIGNALS_HOST="0.0.0.0"
+export ASTRAL_SIGNALS_ACCESS_HOST="127.0.0.1"
+export ASTRAL_SIGNALS_PORT="7860"
+./launch_astral_signals.sh --server-only
+```
+
+Then point the other machine at:
+
+```text
+http://YOUR-HOST-IP:7860
+```
+
+Useful remote entry points:
+
+- `GET /api/health`
+- `GET /api/system`
+- `GET /api/catalog`
+- `POST /api/compose`
+- `POST /api/generate`
+- `POST /api/voice-preview`
+- `POST /api/mix/render`
+
+Important: the current shared-host mode is intended for a trusted LAN or VPN. Astral does not yet ship with user accounts, TLS, or API authentication.
 
 ## Backend bootstrap
 
-### Core optional repo sync
+### Core optional repo sync on Windows
 
 ```powershell
 .\bootstrap_optional_engines.ps1
 ```
 
-### SongGeneration / LeVo 2
+### SongGeneration / LeVo 2 on Windows
 
 ```powershell
 .\bootstrap_songgeneration_backend.ps1
 ```
 
-### HeartMuLa
+### HeartMuLa on Windows
 
 ```powershell
 .\bootstrap_heartmula_backend.ps1
 ```
+
+Linux note: the runtime branch is Linux-compatible, but the optional backend bootstrap scripts are still PowerShell helpers. On Linux, install those repos and venvs in place, then point Astral at them with the `ASTRAL_SIGNALS_*` path env vars.
 
 ## Desktop build
 
@@ -154,6 +213,7 @@ S:\AstralSignals\desktop-app\dist\AstralSignals.exe
 ```text
 astral_signals/                  App code
 astral_signals/static/           Web UI
+launch_astral_signals.sh         Linux launcher
 bootstrap_optional_engines.ps1   Optional repo/vendor sync
 bootstrap_songgeneration_backend.ps1
 bootstrap_heartmula_backend.ps1
@@ -167,7 +227,7 @@ docs/astral-signals-ui-studio.png Live Studio screenshot
 ## Distribution notes
 
 - The repo is public and intended for local usage first
-- The launcher and defaults are tuned for Windows + NVIDIA CUDA
+- The core runtime now supports Windows and Linux, but packaging and one-shot backend bootstrap are still most polished on Windows + NVIDIA CUDA
 - Large backends and model weights live outside the repo by design
 - The code is MIT-licensed, but upstream repos, model weights, and checkpoints keep their own licenses and usage terms
 

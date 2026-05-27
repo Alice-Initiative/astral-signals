@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import time
 from typing import Any
@@ -241,6 +242,14 @@ class OllamaClient:
         self.models_dir = settings.ollama_models_dir
         self.timeout = settings.ollama_timeout_seconds
 
+    def _resolve_binary(self) -> str | None:
+        configured = str(self.binary).strip()
+        if not configured:
+            return None
+        if self.binary.exists():
+            return str(self.binary)
+        return shutil.which(configured)
+
     def _request_json(
         self,
         method: str,
@@ -273,7 +282,8 @@ class OllamaClient:
         if self._is_healthy():
             return
 
-        if not self.binary.exists():
+        resolved_binary = self._resolve_binary()
+        if resolved_binary is None:
             raise OllamaError(f"Ollama binary not found at {self.binary}.")
 
         if not self.models_dir.exists():
@@ -290,7 +300,7 @@ class OllamaClient:
             creationflags |= subprocess.DETACHED_PROCESS
 
         subprocess.Popen(
-            [str(self.binary), "serve"],
+            [resolved_binary, "serve"],
             env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -341,7 +351,7 @@ class OllamaClient:
             return {
                 "available": True,
                 "host": self.base_url,
-                "binary": str(self.binary),
+                "binary": self._resolve_binary() or str(self.binary),
                 "models_dir": str(self.models_dir),
                 "default_model": self.default_model,
                 "available_models": available_models,
@@ -351,7 +361,7 @@ class OllamaClient:
             return {
                 "available": False,
                 "host": self.base_url,
-                "binary": str(self.binary),
+                "binary": self._resolve_binary() or str(self.binary),
                 "models_dir": str(self.models_dir),
                 "default_model": self.default_model,
                 "error": str(exc),
