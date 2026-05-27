@@ -4,7 +4,7 @@ Thanks for helping improve Astral Signals.
 
 ## Before you start
 
-- The main local workflow is most polished on `Windows + NVIDIA CUDA`, but the runtime also supports Linux
+- The main local workflow is most polished on `Windows + NVIDIA CUDA`, but the app should still launch cleanly in CPU-only mode on supported platforms
 - Heavy assets are expected to live outside the repo, typically under your chosen `ASTRAL_SIGNALS_HOME`
 - Please avoid committing local caches, outputs, logs, or downloaded model weights
 
@@ -46,6 +46,7 @@ On Linux, install those optional repos and their venvs manually, then point Astr
 
 - Keep changes local-first and privacy-aware
 - Prefer defaults that are friendly to smaller single-GPU systems when practical
+- Keep CPU-only fallback paths honest: if a backend really needs CUDA, disable it clearly instead of letting it fail late
 - Be explicit about experimental backends in UI copy and docs
 - If you change frontend behavior, verify it in the desktop app window and, when needed, the browser fallback at `http://127.0.0.1:7860`
 - If you add or tune a backend, record whether it is only staged or actually locally verified

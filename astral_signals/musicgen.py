@@ -38,6 +38,9 @@ class MusicGenClient:
         return {
             "available": True,
             "device": self.device,
+            "requires_cuda": False,
+            "cpu_supported": True,
+            "cuda_available": torch.cuda.is_available(),
             "loaded_model": self._model_id,
             "max_duration_seconds": MUSICGEN_MAX_DURATION_SECONDS,
             "models": self.list_models(),
