@@ -5,7 +5,7 @@ Thanks for helping improve Astral Signals.
 ## Before you start
 
 - The main local workflow is most polished on `Windows + NVIDIA CUDA`, but the runtime also supports Linux
-- Heavy assets are expected to live outside the repo, usually under `S:\AstralSignals` on Windows or `~/AstralSignals` on Linux
+- Heavy assets are expected to live outside the repo, typically under your chosen `ASTRAL_SIGNALS_HOME`
 - Please avoid committing local caches, outputs, logs, or downloaded model weights
 
 ## Local setup

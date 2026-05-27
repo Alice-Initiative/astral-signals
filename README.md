@@ -20,7 +20,7 @@ Astral Signals is a local-first desktop song studio for Windows and Linux. It op
 - Split vocals and instrumentals, remix stems, and match lyrics to arrangement timing
 - Compare multiple render engines from one mapped prompt
 
-Heavy assets default to `S:\AstralSignals` on Windows and `~/AstralSignals` on Linux, so large model downloads and audio outputs stay off your repo unless you override them.
+Heavy assets default to a platform-local storage root, so large model downloads and audio outputs stay off your repo unless you override them.
 
 ## Current stack
 
@@ -74,13 +74,13 @@ python -m pip install -e .
 
 ### 2. Point Astral at your preferred storage root if needed
 
-Windows default:
+Windows example:
 
 ```powershell
 $env:ASTRAL_SIGNALS_HOME = "S:\AstralSignals"
 ```
 
-Linux default:
+Linux example:
 
 ```bash
 export ASTRAL_SIGNALS_HOME="$HOME/AstralSignals"
@@ -187,7 +187,7 @@ To package Astral as a Windows app executable:
 That produces:
 
 ```text
-S:\AstralSignals\desktop-app\dist\AstralSignals.exe
+<ASTRAL_SIGNALS_HOME>/desktop-app/dist/AstralSignals.exe
 ```
 
 ## Suggested user flow
