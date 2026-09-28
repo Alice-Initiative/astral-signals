@@ -101,6 +101,30 @@ class AudioTools:
             "stem_sample_rate": TARGET_STEM_SAMPLE_RATE,
         }
 
+    def finalize_song_ending(
+        self,
+        audio_path: str | Path,
+        *,
+        fade_out_seconds: float = 2.4,
+    ) -> dict[str, Any]:
+        """Soften generator cutoffs without changing the song's duration."""
+        path = self._resolve_audio_path(str(audio_path))
+        samples, sample_rate = self._load_audio(path)
+        total_frames = samples.shape[0]
+        duration_seconds = total_frames / float(sample_rate) if sample_rate else 0.0
+        fade_seconds = min(max(0.0, float(fade_out_seconds)), max(0.0, duration_seconds * 0.18))
+        fade_frames = int(round(fade_seconds * sample_rate))
+        if fade_frames > 1:
+            # A short equal-power fade keeps the final phrase audible while removing the hard edge.
+            curve = np.cos(np.linspace(0.0, np.pi / 2.0, fade_frames, dtype=np.float32))
+            samples[-fade_frames:, :] *= curve[:, None]
+            sf.write(path, samples, sample_rate, subtype="FLOAT")
+        return {
+            "applied": fade_frames > 1,
+            "fade_out_seconds": round(fade_frames / float(sample_rate), 3) if sample_rate else 0.0,
+            "duration_seconds": round(duration_seconds, 3),
+        }
+
     def separate_mix(
         self,
         *,

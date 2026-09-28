@@ -12,7 +12,7 @@ from typing import Any, Literal
 
 import torch
 
-from astral_signals.acestep import AceStepQueueStuckError, ace_step_client
+from astral_signals.acestep import AceStepActiveRenderError, AceStepQueueStuckError, ace_step_client
 from astral_signals.audio_tools import audio_tools
 from astral_signals.config import settings
 from astral_signals.engine_catalog import (
@@ -929,6 +929,9 @@ def build_render_prompt_payload(
 
     descriptors = [
         seed_prompt,
+        (
+            "complete musical ending: reserve the final 8 to 12 seconds for a real resolved outro, finish the final lyric naturally, and land on a clear final chord or cadence; never stop mid-phrase or mid-bar"
+        ),
         f"genre: {truncate_text(str(plan.get('genre') or request.genre or ''), 90)}"
         if (plan.get("genre") or request.genre)
         else "",
@@ -2193,6 +2196,111 @@ class AstralRuntime:
         session_dir = settings.output_dir / f"{timestamp}-{label}"
         session_dir.mkdir(parents=True, exist_ok=True)
         return session_dir
+
+    def _write_release_record(
+        self,
+        *,
+        session_dir: Path,
+        manifest: dict[str, Any],
+        request: GenerationRequest,
+        tracks: list[dict[str, object]],
+    ) -> dict[str, str]:
+        """Write a publication evidence packet beside the rendered audio."""
+        track_records = [
+            {
+                "label": track.get("label", ""),
+                "role": track.get("role", "mix"),
+                "path": track.get("path", ""),
+                "url": track.get("url", ""),
+                "metadata": track.get("metas", {}),
+            }
+            for track in tracks
+        ]
+        request_data = asdict(request)
+        input_inventory = {
+            "prompt": request.prompt,
+            "lyrics": request.lyrics,
+            "voice_clone_profile_id": request.voice_clone_profile_id,
+            "voice_clone_profile_name": request.voice_clone_profile_name,
+            "voicebox_profile_id": request.voicebox_profile_id,
+            "voicebox_profile_name": request.voicebox_profile_name,
+            "voicebox_text": request.voicebox_text,
+            "singer_profiles": request.singers,
+            "note": "Add any external samples, artwork, collaborators, or imported audio used outside this request before publishing.",
+        }
+        rights_review = {
+            "publication_ready": False,
+            "uploader_attestation_required": True,
+            "checks": {
+                "all_lyrics_are_original_or_cleared": False,
+                "all_prompts_and_source_materials_are_cleared": False,
+                "all_audio_samples_and_imported_audio_are_cleared": False,
+                "voice_models_and_reference_samples_are_authorized": False,
+                "no_protected_song_is_being_copied": False,
+                "no_real_artist_voice_is_being_imitated_without_permission": False,
+                "collaborators_and_splits_are_documented": False,
+                "artwork_and_metadata_are_cleared": False,
+                "distribution_rights_verified_for_selected_engine_and_weights": False,
+            },
+            "review_note": "Astral records creation evidence but cannot determine legal ownership or distribution rights. Verify every item before uploading.",
+        }
+        record = {
+            "record_type": "astral-signals-publication-record",
+            "record_version": 1,
+            "created_at": datetime.now().isoformat(),
+            "title": manifest.get("title", ""),
+            "resolved_title": manifest.get("title", ""),
+            "session_dir": str(session_dir),
+            "manifest_path": str(session_dir / "manifest.json"),
+            "engine": manifest.get("engine", ""),
+            "device": manifest.get("device", ""),
+            "request": request_data,
+            "resolved_prompt": manifest.get("resolved_prompt", ""),
+            "render_prompt": manifest.get("render_prompt", ""),
+            "resolved_lyrics": manifest.get("resolved_lyrics", ""),
+            "plan": manifest.get("plan", {}),
+            "effective_settings": manifest.get("effective_settings", {}),
+            "payload": manifest.get("payload", {}),
+            "seeds": [track.get("seed") for track in tracks if track.get("seed") is not None],
+            "tracks": track_records,
+            "inputs": input_inventory,
+            "rights_review": rights_review,
+            "publishing_notes": [
+                "Keep this record with the final audio and retain the original session manifest.",
+                "Complete the rights_review checks and document any collaborators or splits before distribution.",
+                "Confirm the selected engine, model, weights, samples, lyrics, voices, and artwork permit the intended release.",
+            ],
+        }
+        json_path = session_dir / "release_record.json"
+        json_path.write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
+        markdown_path = session_dir / "release_record.md"
+        markdown_path.write_text(
+            "# Astral Signals Publication Record\n\n"
+            f"- Title: {record['title']}\n"
+            f"- Created: {record['created_at']}\n"
+            f"- Engine: {record['engine']}\n"
+            f"- Device: {record['device']}\n"
+            f"- Session manifest: `{record['manifest_path']}`\n\n"
+            "## Outputs\n\n"
+            + "\n".join(f"- {item['label'] or item['role']}: `{item['path']}`" for item in track_records)
+            + "\n\n## Creation Evidence\n\n"
+            + f"### Resolved Prompt\n\n{record['resolved_prompt']}\n\n"
+            + f"### Render Prompt\n\n{record['render_prompt']}\n\n"
+            + f"### Resolved Lyrics\n\n```text\n{record['resolved_lyrics']}\n```\n\n"
+            + "## Rights Checklist\n\n"
+            + "- [ ] All lyrics are original or cleared\n"
+            + "- [ ] Prompts and source materials are cleared\n"
+            + "- [ ] Audio samples and imported audio are cleared\n"
+            + "- [ ] Voice models and reference samples are authorized\n"
+            + "- [ ] The track does not copy a protected song\n"
+            + "- [ ] No real artist voice is imitated without permission\n"
+            + "- [ ] Collaborators and splits are documented\n"
+            + "- [ ] Artwork and metadata are cleared\n"
+            + "- [ ] Engine/model/weights permit this distribution\n\n"
+            + "> Astral records creation evidence; the uploader must verify legal rights before publishing.\n",
+            encoding="utf-8",
+        )
+        return {"json": str(json_path), "markdown": str(markdown_path)}
 
     def list_voice_clone_profiles(self) -> list[dict[str, object]]:
         return voicebox_client.list_profiles()
@@ -3462,6 +3570,7 @@ class AstralRuntime:
                     audio_format=resolved_audio_format,
                 )
                 output_path = Path(str(record["path"]))
+                ending = audio_tools.finalize_song_ending(output_path)
                 results.append(
                     {
                         "candidate": index + 1,
@@ -3474,6 +3583,7 @@ class AstralRuntime:
                             "duration_seconds": record["duration_seconds"],
                             "guidance_scale": record["guidance_scale"],
                             "model_id": record["model_id"],
+                            "ending_fade_out_seconds": ending["fade_out_seconds"],
                         },
                     }
                 )
@@ -3487,6 +3597,13 @@ class AstralRuntime:
         manifest["status"] = "completed"
         manifest["completed_at"] = datetime.now().isoformat()
         manifest["tracks"] = results
+        release_record = self._write_release_record(
+            session_dir=session_dir,
+            manifest=manifest,
+            request=request,
+            tracks=results,
+        )
+        manifest["release_record"] = release_record
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
         return {
@@ -3664,6 +3781,7 @@ class AstralRuntime:
             )
             final_path = session_dir / final_name
             shutil.move(str(source_path), str(final_path))
+            ending = audio_tools.finalize_song_ending(final_path)
             results.append(
                 {
                     "candidate": 1,
@@ -3679,6 +3797,7 @@ class AstralRuntime:
                         "model_id": resolved_song_model,
                         "model_label": model_metadata.get("label", resolved_song_model),
                         "generation_type": generation_type,
+                        "ending_fade_out_seconds": ending["fade_out_seconds"],
                     },
                 }
             )
@@ -3693,6 +3812,13 @@ class AstralRuntime:
         manifest["status"] = "completed"
         manifest["completed_at"] = datetime.now().isoformat()
         manifest["tracks"] = results
+        release_record = self._write_release_record(
+            session_dir=session_dir,
+            manifest=manifest,
+            request=request,
+            tracks=results,
+        )
+        manifest["release_record"] = release_record
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
         return {
@@ -3825,10 +3951,19 @@ class AstralRuntime:
                 },
             }
         ]
+        ending = audio_tools.finalize_song_ending(output_path)
+        results[0]["metas"]["ending_fade_out_seconds"] = ending["fade_out_seconds"]
 
         manifest["status"] = "completed"
         manifest["completed_at"] = datetime.now().isoformat()
         manifest["tracks"] = results
+        release_record = self._write_release_record(
+            session_dir=session_dir,
+            manifest=manifest,
+            request=request,
+            tracks=results,
+        )
+        manifest["release_record"] = release_record
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
         return {
@@ -3989,6 +4124,45 @@ class AstralRuntime:
         }
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
+        def pick_joinable_active_render(records: list[dict[str, Any]]) -> dict[str, Any] | None:
+            def normalize(value: str) -> str:
+                return re.sub(r"\s+", " ", (value or "").strip()).casefold()
+
+            target_title = normalize(resolved_title)
+            target_model = str(payload.get("model", "")).strip()
+            target_duration = int(payload.get("audio_duration", 0) or 0)
+            target_vocal_mode = request.vocal_mode.strip()
+
+            exact_matches: list[dict[str, Any]] = []
+            loose_matches: list[dict[str, Any]] = []
+            for record in records:
+                record_title = normalize(
+                    str(record.get("title", "")).strip()
+                    or str(record.get("request_title", "")).strip()
+                )
+                if target_title and record_title != target_title:
+                    continue
+                if not str(record.get("task_id", "")).strip():
+                    continue
+
+                loose_matches.append(record)
+
+                record_model = str(record.get("payload_model", "")).strip()
+                record_duration = int(record.get("audio_duration", 0) or 0)
+                record_vocal_mode = str(record.get("vocal_mode", "")).strip()
+                if (
+                    (not target_model or record_model == target_model)
+                    and (not target_duration or record_duration in {0, target_duration})
+                    and (not target_vocal_mode or record_vocal_mode in {"", target_vocal_mode})
+                ):
+                    exact_matches.append(record)
+
+            if exact_matches:
+                return exact_matches[0]
+            if loose_matches:
+                return loose_matches[0]
+            return None
+
         generation: dict[str, Any] | None = None
         recovery_notes: list[str] = []
         last_error: Exception | None = None
@@ -4003,6 +4177,33 @@ class AstralRuntime:
                 manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
                 generation = ace_step_client.wait_for_song(task_id, timeout_seconds=timeout_seconds)
                 break
+            except AceStepActiveRenderError as exc:
+                last_error = exc
+                active_record = pick_joinable_active_render(exc.active_records)
+                if active_record is None:
+                    break
+
+                join_note = (
+                    "Astral found an in-flight ACE-Step render for this same soundtrack and joined it "
+                    "instead of submitting a duplicate song job."
+                )
+                if join_note not in recovery_notes:
+                    recovery_notes.append(join_note)
+                manifest["status"] = "joining_active"
+                manifest["task_id"] = str(active_record.get("task_id", "")).strip()
+                manifest["progress_text"] = "Joining existing Astral soundtrack render..."
+                manifest["error"] = ""
+                manifest["recovery_notes"] = recovery_notes
+                manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+                try:
+                    generation = ace_step_client.wait_for_song(
+                        manifest["task_id"],
+                        timeout_seconds=max(timeout_seconds, int(active_record.get("timeout_seconds", timeout_seconds) or timeout_seconds)),
+                    )
+                    break
+                except Exception as join_exc:
+                    last_error = join_exc
+                    break
             except AceStepQueueStuckError as exc:
                 last_error = exc
                 if attempt_index == 0:
@@ -4049,6 +4250,8 @@ class AstralRuntime:
                 else:
                     ace_step_client.download_audio(str(record.get("file_url", "")), output_path)
 
+                ending = audio_tools.finalize_song_ending(output_path)
+
                 results.append(
                     {
                         "candidate": index,
@@ -4056,7 +4259,10 @@ class AstralRuntime:
                         "path": str(output_path),
                         "url": f"/outputs/{session_dir.name}/{output_name}",
                         "source_url": record.get("file_url", ""),
-                        "metas": record.get("metas", {}),
+                        "metas": {
+                            **(record.get("metas", {}) or {}),
+                            "ending_fade_out_seconds": ending["fade_out_seconds"],
+                        },
                     }
                 )
         except Exception as exc:
@@ -4073,6 +4279,13 @@ class AstralRuntime:
         manifest["task_id"] = generation["task_id"]
         manifest["progress_text"] = generation["progress_text"]
         manifest["tracks"] = results
+        release_record = self._write_release_record(
+            session_dir=session_dir,
+            manifest=manifest,
+            request=request,
+            tracks=results,
+        )
+        manifest["release_record"] = release_record
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
         return {

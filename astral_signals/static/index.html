@@ -43,7 +43,10 @@
             <a class="sidebar-link is-active" href="#createStudio"><span>Create</span></a>
             <a class="sidebar-link quick-only" href="#quickstartFlow"><span>Explore</span></a>
             <a class="sidebar-link" href="#outputDeck"><span>Library</span></a>
+            <a class="sidebar-link advanced-only" href="#arrangementDeck"><span>Arrangement</span></a>
+            <a class="sidebar-link advanced-only" href="#instrumentDeck"><span>Instrument Deck</span></a>
             <a class="sidebar-link advanced-only" href="#aliceLab"><span>Alice Lab</span></a>
+            <a class="sidebar-link advanced-only" href="#mixDeck"><span>Mix Deck</span></a>
             <a class="sidebar-link advanced-only" href="#stemStudio"><span>Stem Studio</span></a>
             <a class="sidebar-link advanced-only" href="#voiceLab"><span>Voice Lab</span></a>
           </nav>
@@ -58,7 +61,7 @@
             <p class="section-tag">Quick Notes</p>
             <ul class="sidebar-list">
               <li>Quickstart keeps the path simple.</li>
-              <li>Studio reveals routing, clone, and stem tools.</li>
+              <li>Studio reveals routing, cloning, stems, and Mix Deck.</li>
               <li>Installed models appear automatically.</li>
             </ul>
           </div>
@@ -96,7 +99,7 @@
             </div>
           </section>
 
-      <section class="panel" id="createStudio">
+      <section class="panel" id="createStudio" data-studio-panel="songforge">
         <div class="panel-heading">
           <div>
             <p class="section-tag">Create</p>
@@ -138,6 +141,37 @@
             </div>
           </div>
 
+          <section class="studio-workspace-nav advanced-only" id="studioWorkspaceNav">
+            <div class="studio-workspace-copy">
+              <p class="section-tag">Studio Workspace</p>
+              <h3>Move room to room instead of scrolling one long stack</h3>
+            </div>
+            <div class="studio-workspace-buttons">
+              <button type="button" class="studio-pane-chip is-active" data-studio-pane="songforge" data-forge-pane-target="blueprint">Song Forge</button>
+              <button type="button" class="studio-pane-chip" data-studio-pane="songforge" data-forge-pane-target="alice" data-studio-focus="aliceLab">Alice</button>
+              <button type="button" class="studio-pane-chip" data-studio-pane="songforge" data-forge-pane-target="voice" data-studio-focus="voiceLab">Voice</button>
+              <button type="button" class="studio-pane-chip" data-studio-pane="mixdeck">Mix</button>
+              <button type="button" class="studio-pane-chip" data-studio-pane="stemstudio">Stems</button>
+              <button type="button" class="studio-pane-chip" data-studio-pane="outputdeck">Output</button>
+            </div>
+          </section>
+
+          <section class="forge-room-nav advanced-only" id="forgeRoomNav">
+            <div class="studio-workspace-copy">
+              <p class="section-tag">Song Forge Rooms</p>
+              <h3>Build like a studio session instead of one long menu</h3>
+            </div>
+            <div class="forge-room-buttons">
+              <button type="button" class="forge-room-chip is-active" data-forge-pane="blueprint">Blueprint</button>
+              <button type="button" class="forge-room-chip" data-forge-pane="arrangement" data-forge-focus="arrangementDeck">Arrange</button>
+              <button type="button" class="forge-room-chip" data-forge-pane="instrument" data-forge-focus="instrumentDeck">Instrument</button>
+              <button type="button" class="forge-room-chip" data-forge-pane="lyrics">Lyrics</button>
+              <button type="button" class="forge-room-chip" data-forge-pane="alice" data-forge-focus="aliceLab">Alice</button>
+              <button type="button" class="forge-room-chip" data-forge-pane="voice" data-forge-focus="voiceLab">Voice</button>
+              <button type="button" class="forge-room-chip" data-forge-pane="render">Render</button>
+            </div>
+          </section>
+
           <section class="quickstart-guide quick-only" id="quickstartFlow">
             <div class="quickstart-guide-copy">
               <p class="section-tag">Quickstart Flow</p>
@@ -157,13 +191,14 @@
               </article>
               <article class="quickstart-card">
                 <strong>3. Go deeper only if needed</strong>
-                <p>Switch to Studio when you want manual lyrics, multi-singer routing, Alice Lab, Voicebox cues, or stem editing.</p>
+                <p>Switch to Studio when you want manual lyrics, multi-singer routing, Alice Lab, Voicebox cues, stem editing, or full Mix Deck control.</p>
               </article>
             </div>
           </section>
 
         <div class="forge-layout">
         <form id="generatorForm" class="form-grid forge-main">
+          <section class="forge-pane-panel" data-forge-pane="blueprint">
           <label class="field field-wide quick-card quick-card-brief">
             <span>Core brief</span>
             <textarea
@@ -173,17 +208,6 @@
               placeholder="A cotton-candy cosmic anthem where Alice guides a lost traveler through star trails and memory fragments"
               required
             ></textarea>
-          </label>
-
-          <label class="field field-wide advanced-only quick-card quick-card-lyrics">
-            <span>Lyrics</span>
-            <textarea
-              id="lyrics"
-              name="lyrics"
-              rows="8"
-              placeholder="[Verse]&#10;If you already have lyrics, drop them here. Leave blank and Astral AI can draft them."
-            ></textarea>
-            <small class="field-note">Use section tags like [Verse], [Chorus], and [Bridge] when you have them.</small>
           </label>
 
           <label class="field quick-card quick-card-title">
@@ -206,19 +230,6 @@
             </select>
             <small class="field-note">Choose the live render stack Astral should use for this pass.</small>
           </label>
-
-          <section class="engine-lab field-wide advanced-only" id="engineLab">
-            <div class="subpanel-heading">
-              <div>
-                <p class="section-tag">Engine Lab</p>
-                <h3>Song engines and specialist music tools</h3>
-              </div>
-              <div class="voice-preview-meta" id="engineLabMeta">Astral can surface live render backends plus optional local labs for stems, orchestration, and singer identity work.</div>
-            </div>
-            <div class="engine-card-grid" id="engineCatalog">
-              <p class="microcopy">Loading local engine catalog...</p>
-            </div>
-          </section>
 
           <label class="field quick-card quick-card-vocal-mode">
             <span>Vocal mode</span>
@@ -248,6 +259,42 @@
             <span>Mood</span>
             <input id="mood" name="mood" type="text" placeholder="defiant, luminous, huge" />
           </label>
+
+          <label class="field quick-card quick-card-duration">
+            <span>Duration</span>
+            <input id="duration" name="duration" type="range" min="10" max="240" value="60" />
+            <strong id="durationValue">60s</strong>
+          </label>
+
+          <label class="field quick-card quick-card-candidates">
+            <span>Candidates</span>
+            <input id="candidates" name="candidates" type="range" min="1" max="2" value="1" />
+            <strong id="candidatesValue">1</strong>
+          </label>
+
+          <div class="field toggle-field quick-card quick-card-ai">
+            <span>Astral AI composer</span>
+            <label class="toggle">
+              <input id="use_ai" name="use_ai" type="checkbox" checked />
+              <span>Use local Ollama to write the song brief and lyrics plan before rendering</span>
+            </label>
+          </div>
+          </section>
+
+          <section class="forge-pane-panel" data-forge-pane="lyrics">
+          <label class="field field-wide advanced-only quick-card quick-card-lyrics">
+            <span>Lyrics</span>
+            <textarea
+              id="lyrics"
+              name="lyrics"
+              rows="8"
+              placeholder="[Verse]&#10;If you already have lyrics, drop them here. Leave blank and Astral AI can draft them."
+            ></textarea>
+            <small class="field-note">Use section tags like [Verse], [Chorus], and [Bridge] when you have them.</small>
+          </label>
+          </section>
+
+          <section class="forge-pane-panel" data-forge-pane="arrangement">
 
           <label class="field quick-card quick-card-instruments">
             <span>Instruments</span>
@@ -283,6 +330,276 @@
             <span>Texture</span>
             <input id="texture" name="texture" type="text" placeholder="wide, glossy, rising, high-impact" />
           </label>
+
+          <section class="arrangement-deck field-wide advanced-only" id="arrangementDeck">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Arrangement Deck</p>
+                <h3>Build the song part by part</h3>
+              </div>
+              <div class="voice-preview-meta" id="arrangementDeckMeta">This is a production blueprint for instruments and section flow, not a live MIDI piano roll yet.</div>
+            </div>
+
+            <div class="mix-template-rack arrangement-rack">
+              <div class="mix-template-copy">
+                <p class="section-tag">Instrument Rack</p>
+                <p class="microcopy">Add lanes the way a producer would sketch a session, then let Astral route that plan into the song brief.</p>
+              </div>
+              <div class="mix-template-buttons">
+                <button type="button" class="button-ghost" data-arrangement-template="drums">Drums</button>
+                <button type="button" class="button-ghost" data-arrangement-template="bass">Bass</button>
+                <button type="button" class="button-ghost" data-arrangement-template="piano">Keys</button>
+                <button type="button" class="button-ghost" data-arrangement-template="synth">Lead Synth</button>
+                <button type="button" class="button-ghost" data-arrangement-template="pad">Pad</button>
+                <button type="button" class="button-ghost" data-arrangement-template="guitar">Guitar</button>
+                <button type="button" class="button-ghost" data-arrangement-template="strings">Strings</button>
+                <button type="button" class="button-ghost" data-arrangement-template="fx">FX</button>
+                <button type="button" class="button-ghost" data-arrangement-template="vocals">Lead Vocal</button>
+                <button type="button" class="button-ghost" data-arrangement-template="spoken">Spoken Cue</button>
+              </div>
+            </div>
+
+            <div class="arrangement-shell">
+              <section class="arrangement-builder">
+                <div class="mix-column-head">
+                  <div>
+                    <p class="section-tag">Part Lanes</p>
+                    <h3>Instrument and vocal roles</h3>
+                  </div>
+                  <button type="button" class="button-tertiary" id="arrangementAddPartButton">Add Blank Part</button>
+                </div>
+                <div id="arrangementPartList" class="arrangement-part-list">
+                  <article class="empty-state compact">
+                    <h3>No arrangement parts yet</h3>
+                    <p>Add drums, synths, vocals, or FX lanes to map what the song should actually be built from.</p>
+                  </article>
+                </div>
+              </section>
+
+              <aside class="arrangement-inspector">
+                <div class="mix-column-head">
+                  <div>
+                    <p class="section-tag">Part Inspector</p>
+                    <h3>Selected part</h3>
+                  </div>
+                  <span class="mix-meta-pill" id="arrangementSelectedLabel">No part selected</span>
+                </div>
+                <div id="arrangementInspectorPanel" class="arrangement-inspector-panel">
+                  <article class="empty-state compact">
+                    <h3>Select a part lane</h3>
+                    <p>Choose a lane to decide where it enters, what it does, and how it should feel.</p>
+                  </article>
+                </div>
+              </aside>
+            </div>
+
+            <section class="arrangement-sections">
+              <div class="mix-column-head">
+                <div>
+                  <p class="section-tag">Song Map</p>
+                  <h3>Section energy and flow</h3>
+                </div>
+                <span class="mix-meta-pill" id="arrangementSectionSummary">No section plan yet</span>
+              </div>
+              <div id="arrangementSectionGrid" class="arrangement-section-grid"></div>
+            </section>
+          </section>
+          </section>
+
+          <section class="forge-pane-panel" data-forge-pane="instrument">
+          <section class="instrument-deck field-wide advanced-only" id="instrumentDeck">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Instrument Deck</p>
+                <h3>Build parts the way a real studio session would</h3>
+              </div>
+              <div class="voice-preview-meta" id="instrumentDeckMeta">Sketch, audition, record, then send the strongest ideas back into the song.</div>
+            </div>
+
+            <section class="instrument-session-guide">
+              <div class="instrument-guide-copy">
+                <p class="section-tag">Guided Flow</p>
+                <h4 id="instrumentGuideStatus">1. Add a track to begin</h4>
+                <p class="microcopy" id="instrumentGuideHint">Start with Drums, Bass, or Lead Synth. Then choose Draw Notes, Audition Keys, or Record Keys.</p>
+              </div>
+              <div class="instrument-guide-pills">
+                <span class="mix-meta-pill" id="instrumentModeSummary">Mode: Draw</span>
+                <span class="mix-meta-pill" id="instrumentSelectionSummary">No track selected</span>
+                <span class="mix-meta-pill" id="instrumentShortcutSummary">Drag to draw. A..J plays notes. Space previews.</span>
+              </div>
+            </section>
+
+            <div class="mix-template-rack arrangement-rack">
+              <div class="mix-template-copy">
+                <p class="section-tag">Track Rack</p>
+                <p class="microcopy">Start with a role, sketch the pattern, then fold the part back into Arrangement Deck and the final song prompt.</p>
+              </div>
+              <div id="instrumentTemplateButtons" class="mix-template-buttons instrument-template-buttons">
+                <button type="button" class="button-ghost" data-instrument-template="drums">Drums</button>
+                <button type="button" class="button-ghost" data-instrument-template="bass">Bass</button>
+                <button type="button" class="button-ghost" data-instrument-template="piano">Piano</button>
+                <button type="button" class="button-ghost" data-instrument-template="lead">Lead</button>
+                <button type="button" class="button-ghost" data-instrument-template="pad">Pad</button>
+                <button type="button" class="button-ghost" data-instrument-template="strings">Strings</button>
+                <button type="button" class="button-ghost" data-instrument-template="brass">Brass</button>
+                <button type="button" class="button-ghost" data-instrument-template="fx">FX</button>
+              </div>
+              <div id="instrumentPaletteCatalog" class="instrument-palette-catalog">
+                <article class="empty-state compact">
+                  <h3>Loading instrument palette</h3>
+                  <p>Astral is preparing the full local track library.</p>
+                </article>
+              </div>
+            </div>
+
+            <div class="instrument-toolbar">
+              <div class="button-row instrument-main-actions">
+                <button id="instrumentAddTrackButton" type="button" class="button-tertiary">Blank Track</button>
+                <button id="instrumentPlayButton" type="button" class="button-secondary">Preview Loop</button>
+                <button id="instrumentStopButton" type="button" class="button-tertiary">Stop</button>
+                <button id="instrumentPushArrangementButton" type="button">Send To Song</button>
+              </div>
+              <div class="instrument-toolbar-meta">
+                <div class="button-row instrument-edit-actions">
+                  <button id="instrumentUndoButton" type="button" class="button-ghost">Undo</button>
+                  <button id="instrumentRedoButton" type="button" class="button-ghost">Redo</button>
+                  <button id="instrumentCopyButton" type="button" class="button-ghost">Copy Notes</button>
+                  <button id="instrumentPasteButton" type="button" class="button-ghost">Paste</button>
+                  <button id="instrumentDuplicateButton" type="button" class="button-ghost">Duplicate</button>
+                </div>
+                <div class="button-row instrument-live-controls instrument-mode-strip">
+                  <button id="instrumentDrawModeButton" type="button" class="button-ghost is-active">Draw Notes</button>
+                  <button id="instrumentSelectModeButton" type="button" class="button-ghost">Select Notes</button>
+                  <button id="instrumentKeyboardButton" type="button" class="button-ghost">Audition Keys</button>
+                  <button id="instrumentRecordButton" type="button" class="button-ghost">Record Keys</button>
+                </div>
+                <div class="button-row instrument-live-controls">
+                  <label class="instrument-inline-field">
+                    <span>Insert length</span>
+                    <select id="instrumentInputLength">
+                      <option value="0.25">1/4 step</option>
+                      <option value="0.5">1/2 step</option>
+                      <option value="1">1 step</option>
+                      <option value="2" selected>2 steps</option>
+                      <option value="4">4 steps</option>
+                      <option value="8">8 steps</option>
+                    </select>
+                  </label>
+                  <div class="button-row instrument-cursor-controls">
+                    <button id="instrumentCursorBackButton" type="button" class="button-ghost">Cursor Left</button>
+                    <span class="mix-meta-pill" id="instrumentCursorLabel">Cursor 1</span>
+                    <button id="instrumentCursorForwardButton" type="button" class="button-ghost">Cursor Right</button>
+                  </div>
+                </div>
+                <div class="button-row instrument-live-controls instrument-compose-tools">
+                  <div class="button-row instrument-edit-actions">
+                    <button id="instrumentLoopSelectionButton" type="button" class="button-ghost">Loop Selection</button>
+                    <button id="instrumentClearLoopButton" type="button" class="button-ghost">Clear Loop</button>
+                    <span class="mix-meta-pill" id="instrumentLoopSummary">Looping full pattern</span>
+                  </div>
+                  <div class="button-row instrument-edit-actions">
+                    <label class="instrument-inline-field">
+                      <span>Quantize</span>
+                      <select id="instrumentQuantizeResolution">
+                        <option value="0.125">1/32 step</option>
+                        <option value="0.25" selected>1/16 step</option>
+                        <option value="0.5">1/8 step</option>
+                        <option value="1">1 step</option>
+                        <option value="2">2 steps</option>
+                      </select>
+                    </label>
+                    <button id="instrumentQuantizeButton" type="button" class="button-ghost">Quantize</button>
+                    <button id="instrumentHumanizeButton" type="button" class="button-ghost">Humanize</button>
+                  </div>
+                </div>
+                <div class="button-row instrument-zoom-controls" id="instrumentZoomControls">
+                  <button type="button" class="button-ghost is-active" data-instrument-zoom="compact">Compact</button>
+                  <button type="button" class="button-ghost" data-instrument-zoom="medium">Medium</button>
+                  <button type="button" class="button-ghost" data-instrument-zoom="large">Large</button>
+                </div>
+                <span class="mix-meta-pill" id="instrumentTrackCount">0 tracks</span>
+                <span class="mix-meta-pill" id="instrumentPlayheadLabel">Stopped</span>
+                <span class="mix-meta-pill" id="instrumentKeyboardHint">Drag draws | A W S E D F T G Y H U J plays | Space previews</span>
+              </div>
+            </div>
+
+            <div class="instrument-shell">
+              <aside class="instrument-browser">
+                <div class="mix-column-head">
+                  <div>
+                    <p class="section-tag">Tracks</p>
+                    <h3>Pattern lanes</h3>
+                  </div>
+                </div>
+                <div id="instrumentTrackList" class="instrument-track-list">
+                  <article class="empty-state compact">
+                    <h3>No instrument tracks yet</h3>
+                    <p>Pick a starter lane to begin: most songs feel grounded fastest with Drums, Bass, or Lead Synth.</p>
+                    <div class="button-row">
+                      <button type="button" class="button-ghost" data-instrument-template="drums">Start with Drums</button>
+                      <button type="button" class="button-ghost" data-instrument-template="bass">Start with Bass</button>
+                      <button type="button" class="button-ghost" data-instrument-template="synth">Start with Lead Synth</button>
+                    </div>
+                  </article>
+                </div>
+              </aside>
+
+              <section class="instrument-pianoroll">
+                <div class="mix-column-head">
+                  <div>
+                    <p class="section-tag">Piano Roll</p>
+                    <h3>Pattern grid</h3>
+                  </div>
+                  <span class="mix-meta-pill" id="instrumentGridSummary">Choose a track to start drawing notes.</span>
+                </div>
+                <div class="instrument-roll-viewport" id="instrumentRollViewport">
+                  <div id="instrumentGridHeader" class="instrument-grid-header"></div>
+                  <div id="instrumentGrid" class="instrument-grid">
+                    <article class="empty-state compact">
+                      <h3>No pattern selected</h3>
+                      <p>Select or create a track and Astral will open a local step piano-roll here.</p>
+                    </article>
+                  </div>
+                </div>
+                <div class="instrument-velocity-panel">
+                  <div class="mix-column-head">
+                    <div>
+                      <p class="section-tag">Velocity Lane</p>
+                      <h3>Dynamics</h3>
+                    </div>
+                    <span class="mix-meta-pill" id="instrumentVelocitySummary">Select a note to shape its velocity.</span>
+                  </div>
+                  <div class="instrument-velocity-viewport">
+                    <div id="instrumentVelocityLane" class="instrument-velocity-lane">
+                      <article class="empty-state compact">
+                        <h3>No dynamics yet</h3>
+                        <p>Add notes to the piano roll, then drag the velocity bars here to shape emphasis and feel.</p>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <aside class="instrument-inspector">
+                <div class="mix-column-head">
+                  <div>
+                    <p class="section-tag">Inspector</p>
+                    <h3>Selected instrument</h3>
+                  </div>
+                  <span class="mix-meta-pill" id="instrumentSelectedLabel">No track selected</span>
+                </div>
+                <div id="instrumentInspectorPanel" class="instrument-inspector-panel">
+                  <article class="empty-state compact">
+                    <h3>Select a track</h3>
+                    <p>Choose a lane to tune its sound, loop size, note range, and the notes you have selected on the roll.</p>
+                  </article>
+                </div>
+              </aside>
+            </div>
+          </section>
+          </section>
+
+          <section class="forge-pane-panel" data-forge-pane="alice">
 
           <section class="alice-lab field-wide advanced-only" id="aliceLab">
             <div class="subpanel-heading">
@@ -443,6 +760,9 @@
               </div>
             </section>
           </section>
+          </section>
+
+          <section class="forge-pane-panel" data-forge-pane="voice">
 
           <section class="voice-lab field-wide advanced-only" id="voiceLab">
             <div class="subpanel-heading">
@@ -1007,7 +1327,7 @@
                 <input
                   id="clone_sample_audio_path"
                   type="text"
-                  placeholder="S:\AstralSignals\references\alice-spoken-sample.wav"
+                  placeholder="/path/to/reference/alice-spoken-sample.wav"
                 />
                 <small class="field-note">Use a local spoken reference clip for the clone. You can add more samples later.</small>
               </label>
@@ -1050,18 +1370,22 @@
               </div>
             </section>
           </section>
+          </section>
 
-          <label class="field quick-card quick-card-duration">
-            <span>Duration</span>
-            <input id="duration" name="duration" type="range" min="10" max="240" value="60" />
-            <strong id="durationValue">60s</strong>
-          </label>
+          <section class="forge-pane-panel" data-forge-pane="render">
 
-          <label class="field quick-card quick-card-candidates">
-            <span>Candidates</span>
-            <input id="candidates" name="candidates" type="range" min="1" max="2" value="1" />
-            <strong id="candidatesValue">1</strong>
-          </label>
+          <section class="engine-lab field-wide advanced-only" id="engineLab">
+            <div class="subpanel-heading">
+              <div>
+                <p class="section-tag">Engine Lab</p>
+                <h3>Song engines and specialist music tools</h3>
+              </div>
+              <div class="voice-preview-meta" id="engineLabMeta">Astral can surface live render backends plus optional local labs for stems, orchestration, and singer identity work.</div>
+            </div>
+            <div class="engine-card-grid" id="engineCatalog">
+              <p class="microcopy">Loading local engine catalog...</p>
+            </div>
+          </section>
 
           <label class="field advanced-only">
             <span>Compose variants</span>
@@ -1079,14 +1403,6 @@
             <input id="seed" name="seed" type="number" min="1" max="2147483647" placeholder="Optional" />
           </label>
 
-          <div class="field toggle-field quick-card quick-card-ai">
-            <span>Astral AI composer</span>
-            <label class="toggle">
-              <input id="use_ai" name="use_ai" type="checkbox" checked />
-              <span>Use local Ollama to write the song brief and lyrics plan before rendering</span>
-            </label>
-          </div>
-
           <div class="field toggle-field advanced-only ace-step-only">
             <span>ACE-Step thinking</span>
             <label class="toggle">
@@ -1102,6 +1418,7 @@
               <span>Let ACE-Step polish the caption and lyric structure before rendering</span>
             </label>
           </div>
+          </section>
 
           <div class="button-row field-wide quick-card quick-card-actions">
             <button id="composeButton" type="button" class="button-secondary">Compose Song</button>
@@ -1138,22 +1455,22 @@
             <h3>Suggested path</h3>
             <ol class="rail-list">
               <li>Pick a preset or write the brief.</li>
+              <li>Shape the arrangement if the instruments matter.</li>
               <li>Compose a plan if you want lyrics help.</li>
-              <li>Preview the singer if the voice matters.</li>
-              <li>Generate the full song.</li>
+              <li>Preview the singer, then generate the song.</li>
             </ol>
           </article>
 
           <article class="rail-card advanced-only">
             <p class="section-tag">Studio Tools</p>
             <h3>Advanced work</h3>
-            <p class="microcopy">Singer routing, voice cloning, stem surgery, and lyric alignment live below when you need deeper control.</p>
+            <p class="microcopy">Arrangement Deck, singer routing, voice cloning, stem surgery, lyric alignment, and Mix Deck all live here when you want a true production pass.</p>
           </article>
         </aside>
         </div>
       </section>
 
-      <section class="panel panel-results" id="outputDeck">
+      <section class="panel panel-results" id="outputDeck" data-studio-panel="outputdeck">
         <div class="panel-heading">
           <div>
             <p class="section-tag">Output Deck</p>
@@ -1173,6 +1490,123 @@
         </div>
       </section>
 
+      <section class="panel panel-mix advanced-only" id="mixDeck" data-studio-panel="mixdeck">
+        <div class="panel-heading">
+          <div>
+            <p class="section-tag">Mix Deck</p>
+            <h2>Arrange, shape, and bounce a real session</h2>
+          </div>
+          <div class="status" id="mixDeckStatus">Ready for DAW-style mixing.</div>
+        </div>
+
+        <div class="mix-deck-summary">
+          <div>
+            <h3>GarageBand-style local workflow</h3>
+            <p id="mixLabMeta">
+              Stack vocals, stems, spoken cues, and renders into one session. Alice can suggest a starting mix, then you can fine-tune and bounce it locally.
+            </p>
+          </div>
+          <div class="mix-deck-toolbar">
+            <label class="field">
+              <span>Session title</span>
+              <input id="mix_title" type="text" placeholder="alice-mix-pass-1" />
+            </label>
+            <label class="field mix-quick-import">
+              <span>Quick import path</span>
+              <input id="mix_quick_path" type="text" placeholder="Paste a local render, stem, or spoken cue path" />
+            </label>
+            <div class="field toggle-field">
+              <span>Safety normalize</span>
+              <label class="toggle">
+                <input id="mix_normalize_output" type="checkbox" checked />
+                <span>Protect the final bounce from clipping if stacked tracks get too hot.</span>
+              </label>
+            </div>
+            <div class="button-row mix-main-actions">
+              <button id="mixQuickAddButton" type="button" class="button-secondary">Import Track</button>
+              <button id="mixAddTrackButton" type="button" class="button-tertiary">New Blank Track</button>
+              <button id="mixAssistButton" type="button">Alice Mix Assist</button>
+              <button id="mixRenderButton" type="button" class="button-secondary">Bounce Mix</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mix-template-rack">
+          <div class="mix-template-copy">
+            <p class="section-tag">Instrument Rack</p>
+            <p class="microcopy">Build arrangement lanes part by part, then import real rendered audio into each lane as you develop the song.</p>
+          </div>
+          <div class="mix-template-buttons">
+            <button type="button" class="button-ghost" data-mix-template="drums">Drums</button>
+            <button type="button" class="button-ghost" data-mix-template="bass">Bass</button>
+            <button type="button" class="button-ghost" data-mix-template="piano">Keys</button>
+            <button type="button" class="button-ghost" data-mix-template="synth">Lead Synth</button>
+            <button type="button" class="button-ghost" data-mix-template="pad">Pad</button>
+            <button type="button" class="button-ghost" data-mix-template="fx">FX</button>
+            <button type="button" class="button-ghost" data-mix-template="vocals">Lead Vocal</button>
+            <button type="button" class="button-ghost" data-mix-template="spoken">Spoken Cue</button>
+          </div>
+        </div>
+
+        <div class="mix-console">
+          <aside class="mix-browser">
+            <div class="mix-column-head">
+              <div>
+                <p class="section-tag">Tracks</p>
+                <h3>Session lanes</h3>
+              </div>
+              <span class="mix-meta-pill" id="mixTrackCount">0 tracks</span>
+            </div>
+            <div id="mixTrackList" class="mix-track-list">
+              <article class="empty-state compact">
+                <h3>No mix session yet</h3>
+                <p>Add a render, split stems, or a voice preview into Mix Deck to start shaping a real session.</p>
+              </article>
+            </div>
+          </aside>
+
+          <section class="mix-arranger">
+            <div class="mix-column-head">
+              <div>
+                <p class="section-tag">Arranger</p>
+                <h3>Timeline and clip flow</h3>
+              </div>
+              <span class="mix-meta-pill" id="mixTimelineSummary">No clips yet</span>
+            </div>
+            <div id="mixRuler" class="mix-ruler"></div>
+            <div id="mixLaneList" class="mix-lane-list">
+              <article class="empty-state compact">
+                <h3>No timeline yet</h3>
+                <p>When tracks are loaded, their regions will appear here with offsets, trims, and fades reflected visually.</p>
+              </article>
+            </div>
+          </section>
+
+          <aside class="mix-inspector">
+            <div class="mix-column-head">
+              <div>
+                <p class="section-tag">Inspector</p>
+                <h3>Selected track</h3>
+              </div>
+              <span class="mix-meta-pill" id="mixSelectedLabel">No track selected</span>
+            </div>
+            <div id="mixInspectorPanel" class="mix-inspector-panel">
+              <article class="empty-state compact">
+                <h3>Select a track</h3>
+                <p>Choose a lane on the left to edit its role, volume, pan, timing, trims, and fades here.</p>
+              </article>
+            </div>
+          </aside>
+        </div>
+
+        <div id="mixResults" class="mini-results">
+          <article class="empty-state compact">
+            <h3>No bounced mix yet</h3>
+            <p>Use Alice Mix Assist for a starting balance, then bounce the session when the lanes feel right.</p>
+          </article>
+        </div>
+      </section>
+
       <section class="transport-dock quick-only">
         <div class="transport-now-playing">
           <div class="transport-art" aria-hidden="true"></div>
@@ -1182,12 +1616,13 @@
           </div>
         </div>
         <div class="transport-actions">
+          <a class="button-tertiary" href="#mixDeck">Open Mix Deck</a>
           <a class="button-tertiary" href="#stemStudio">Export Stems</a>
           <a class="button-secondary" href="#outputDeck">Open Songs</a>
         </div>
       </section>
 
-      <section class="panel panel-tools advanced-only" id="stemStudio">
+      <section class="panel panel-tools advanced-only" id="stemStudio" data-studio-panel="stemstudio">
         <div class="panel-heading">
           <div>
             <p class="section-tag">Stem Studio</p>

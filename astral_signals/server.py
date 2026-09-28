@@ -127,6 +127,33 @@ class StemRemixPayload(BaseModel):
     title: str = Field(default="", max_length=200)
 
 
+class MixTrackPayload(BaseModel):
+    path: str = Field(min_length=3, max_length=4000)
+    label: str = Field(default="", max_length=160)
+    role: str = Field(default="auto", max_length=80)
+    gain_db: float = Field(default=0.0, ge=-24.0, le=24.0)
+    pan: float = Field(default=0.0, ge=-100.0, le=100.0)
+    mute: bool = False
+    solo: bool = False
+    start_seconds: float = Field(default=0.0, ge=0.0, le=1200.0)
+    trim_in_seconds: float = Field(default=0.0, ge=0.0, le=1200.0)
+    trim_out_seconds: float = Field(default=0.0, ge=0.0, le=1200.0)
+    fade_in_seconds: float = Field(default=0.0, ge=0.0, le=30.0)
+    fade_out_seconds: float = Field(default=0.0, ge=0.0, le=30.0)
+
+
+class MixRenderPayload(BaseModel):
+    title: str = Field(default="", max_length=200)
+    normalize_output: bool = True
+    tracks: list[MixTrackPayload] = Field(default_factory=list, min_length=1, max_length=24)
+
+
+class MixInspectPayload(BaseModel):
+    audio_path: str = Field(min_length=3, max_length=4000)
+    label: str = Field(default="", max_length=160)
+    role: str = Field(default="auto", max_length=80)
+
+
 class AlignmentPayload(BaseModel):
     audio_path: str = Field(min_length=3, max_length=4000)
     lyrics: str = Field(default="", max_length=16000)
@@ -346,6 +373,44 @@ async def remix_stems(payload: StemRemixPayload) -> dict[str, object]:
             vocals_gain_db=payload.vocals_gain_db,
             instrumental_gain_db=payload.instrumental_gain_db,
             title=payload.title,
+        )
+    except AudioToolsError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/mix/assist")
+async def assist_mix(payload: MixRenderPayload) -> dict[str, object]:
+    try:
+        return await run_in_threadpool(
+            audio_tools.mix_assist,
+            tracks=[track.model_dump() for track in payload.tracks],
+            title=payload.title,
+        )
+    except AudioToolsError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/mix/inspect")
+async def inspect_mix(payload: MixInspectPayload) -> dict[str, object]:
+    try:
+        return await run_in_threadpool(
+            audio_tools.inspect_mix_track,
+            audio_path=payload.audio_path,
+            label=payload.label,
+            role=payload.role,
+        )
+    except AudioToolsError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/mix/render")
+async def render_mix(payload: MixRenderPayload) -> dict[str, object]:
+    try:
+        return await run_in_threadpool(
+            audio_tools.render_mix_session,
+            tracks=[track.model_dump() for track in payload.tracks],
+            title=payload.title,
+            normalize_output=payload.normalize_output,
         )
     except AudioToolsError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

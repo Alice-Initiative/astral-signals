@@ -23,6 +23,18 @@ class AceStepQueueStuckError(AceStepError):
     """Raised when a submitted task never leaves the backend queue."""
 
 
+class AceStepActiveRenderError(AceStepError):
+    """Raised when Astral already has an in-flight ACE-Step render."""
+
+    def __init__(self, active_records: list[dict[str, Any]]) -> None:
+        self.active_records = active_records
+        titles = ", ".join(record.get("title", "") for record in active_records[:3] if record.get("title"))
+        super().__init__(
+            "ACE-Step already has an active Astral render in progress. "
+            f"Wait for it to finish or clear it before starting another song. Active session(s): {titles}"
+        )
+
+
 def _creation_flags() -> int:
     flags = 0
     if hasattr(subprocess, "CREATE_NO_WINDOW"):
@@ -190,6 +202,13 @@ class AceStepClient:
                         "status": status,
                         "age_seconds": age_seconds,
                         "timeout_seconds": timeout_seconds,
+                        "engine": str(payload.get("engine", "")).strip(),
+                        "resolved_prompt": str(payload.get("resolved_prompt", "")).strip(),
+                        "request_title": str((payload.get("request", {}) or {}).get("title", "")).strip(),
+                        "request_prompt": str((payload.get("request", {}) or {}).get("prompt", "")).strip(),
+                        "payload_model": str((payload.get("payload", {}) or {}).get("model", "")).strip(),
+                        "audio_duration": int(((payload.get("payload", {}) or {}).get("audio_duration", 0) or 0)),
+                        "vocal_mode": str((payload.get("request", {}) or {}).get("vocal_mode", "")).strip(),
                     }
                 )
         return active_records
@@ -208,11 +227,7 @@ class AceStepClient:
 
         active_manifests = self._active_manifest_records()
         if active_manifests:
-            titles = ", ".join(record["title"] for record in active_manifests[:3])
-            raise AceStepError(
-                "ACE-Step already has an active Astral render in progress. "
-                f"Wait for it to finish or clear it before starting another song. Active session(s): {titles}"
-            )
+            raise AceStepActiveRenderError(active_manifests)
 
         self.restart_server(requested_lm_model=requested_lm_model)
 
