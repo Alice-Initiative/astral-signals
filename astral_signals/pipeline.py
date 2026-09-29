@@ -3656,6 +3656,8 @@ class AstralRuntime:
         session_seed = request.seed if request.seed is not None else random.randint(1, 2_147_483_647)
         session_dir = self._create_session_dir(resolved_title)
         output_path = session_dir / f"candidate-01-seed-{session_seed}.wav"
+        lyrics_path = session_dir / "resolved-lyrics.txt"
+        lyrics_path.write_text(lyrics_text + "\n", encoding="utf-8")
         render_prompt_text = build_render_prompt_payload(request, plan, prompt_text)
         manifest_path = session_dir / "manifest.json"
         manifest = {
@@ -3667,6 +3669,8 @@ class AstralRuntime:
             "resolved_prompt": prompt_text,
             "render_prompt": render_prompt_text,
             "resolved_lyrics": lyrics_text,
+            "lyrics_path": str(lyrics_path),
+            "lyrics_url": f"/outputs/{session_dir.name}/{lyrics_path.name}",
             "device": self.device,
             "engine": YUE2_BACKEND,
             "payload": {"model": "YuE2-3B", "remote": True, "audio_duration": request.duration},
@@ -3718,6 +3722,8 @@ class AstralRuntime:
             "resolved_title": resolved_title,
             "resolved_prompt": prompt_text,
             "resolved_lyrics": lyrics_text,
+            "lyrics_path": str(lyrics_path),
+            "lyrics_url": f"/outputs/{session_dir.name}/{lyrics_path.name}",
             "plan": plan,
             "device": self.device,
             "task_id": "",
