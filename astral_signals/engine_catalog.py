@@ -9,6 +9,7 @@ ACE_STEP_BACKEND = "ace-step"
 MUSICGEN_BACKEND = "musicgen"
 HEARTMULA_BACKEND = "heartmula"
 SONGGENERATION_BACKEND = "songgeneration"
+YUE2_BACKEND = "yue2-modal"
 
 MUSICGEN_MODEL_OPTIONS: list[dict[str, str]] = [
     {
@@ -59,6 +60,18 @@ OPTIONAL_ENGINE_LIBRARY: list[dict[str, Any]] = [
         "limitations": "Resource-hungry and not yet adapted to Astral's Windows launcher path.",
         "capabilities": ["lyrics", "full song", "multilingual"],
         "next_step": "Keep the repo ready so Astral can gain a YuE adapter later without changing the UI again.",
+    },
+    {
+        "id": YUE2_BACKEND,
+        "label": "YuE2-3B · Hermes Modal",
+        "kind": "render",
+        "repo_dir": settings.yue_repo,
+        "repo_url": "https://github.com/multimodal-art-projection/YuE",
+        "description": "Remote YuE2-3B full-song singing through the Hermes Modal deployment.",
+        "best_for": "Linux bots and CPU-only machines that need full songs without local model weights.",
+        "limitations": "Requires an operator-provided HTTPS endpoint and any access token configured in the environment.",
+        "capabilities": ["lyrics", "full song", "multilingual", "remote GPU"],
+        "next_step": "Set ASTRAL_SIGNALS_YUE2_ENDPOINT to the Hermes YuE2 endpoint.",
     },
     {
         "id": "jasco",
@@ -131,6 +144,8 @@ def decode_song_model_selection(value: str) -> tuple[str, str]:
         return SONGGENERATION_BACKEND, raw
     if raw.startswith("acestep"):
         return ACE_STEP_BACKEND, raw
+    if raw.startswith(YUE2_BACKEND):
+        return YUE2_BACKEND, raw
     return ACE_STEP_BACKEND, raw
 
 

@@ -21,6 +21,7 @@ from astral_signals.engine_catalog import (
     MUSICGEN_BACKEND,
     OPTIONAL_ENGINE_LIBRARY,
     SONGGENERATION_BACKEND,
+    YUE2_BACKEND,
     decode_song_model_selection,
     encode_song_model_selection,
     repo_sync_state,
@@ -32,6 +33,7 @@ from astral_signals.ollama import OllamaError, PromptRecipe, ollama_client
 from astral_signals.prompting import build_prompt
 from astral_signals.songgeneration import SongGenerationError, songgeneration_client
 from astral_signals.voicebox import VoiceboxError, voicebox_client
+from astral_signals.yue2_remote import YuE2RemoteError, yue2_remote_client
 
 VocalMode = Literal["lyrics", "instrumental", "wordless"]
 MAX_DURATION_SECONDS = 240
@@ -1747,7 +1749,7 @@ class AstralRuntime:
         targets: list[dict[str, Any]] = []
         selected_backend, _ = decode_song_model_selection(request.song_model)
         preferred_backends = {ACE_STEP_BACKEND, MUSICGEN_BACKEND}
-        if selected_backend in {SONGGENERATION_BACKEND, HEARTMULA_BACKEND}:
+        if selected_backend in {SONGGENERATION_BACKEND, HEARTMULA_BACKEND, YUE2_BACKEND}:
             preferred_backends.add(selected_backend)
         for card in catalog.get("engine_catalog", []):
             if card.get("kind") != "render" or not card.get("ready") or not card.get("select_value"):
@@ -1974,6 +1976,23 @@ class AstralRuntime:
                     if not cuda_available
                     else "First use downloads weights into the S: cache automatically."
                 ),
+            },
+            {
+                "id": YUE2_BACKEND,
+                "label": "YuE2-3B · Hermes Modal",
+                "kind": "render",
+                "ready": bool(yue2_remote_client.status().get("ready")),
+                "status": "remote-ready" if yue2_remote_client.status().get("ready") else "not-configured",
+                "status_label": "Remote ready" if yue2_remote_client.status().get("ready") else "Endpoint needed",
+                "description": "Remote YuE2-3B full-song singing through the Hermes Modal deployment.",
+                "best_for": "Linux bots and CPU-only machines that need real sung songs without local GPU weights.",
+                "limitations": "Requires a Hermes YuE2 HTTPS endpoint in ASTRAL_SIGNALS_YUE2_ENDPOINT.",
+                "capabilities": ["lyrics", "full song", "multilingual", "remote GPU"],
+                "repo_dir": str(settings.yue_repo),
+                "repo_url": "https://github.com/multimodal-art-projection/YuE",
+                "models": [{"id": "YuE2-3B", "label": "YuE2-3B", "description": "Hermes remote YuE2 model."}],
+                "select_value": encode_song_model_selection(YUE2_BACKEND, "YuE2-3B"),
+                "next_step": "Set ASTRAL_SIGNALS_YUE2_ENDPOINT on the Hermes bot or Linux host.",
             },
             {
                 "id": SONGGENERATION_BACKEND,
@@ -3460,6 +3479,8 @@ class AstralRuntime:
             return self._run_songgeneration_generation(request)
         if backend_id == HEARTMULA_BACKEND:
             return self._run_heartmula_generation(request)
+        if backend_id == YUE2_BACKEND:
+            return self._run_yue2_generation(request)
         if backend_id != ACE_STEP_BACKEND:
             raise AstralPipelineError(
                 f"The '{backend_id}' backend is cataloged in Astral, but a live runner is not wired yet. "
@@ -3616,6 +3637,91 @@ class AstralRuntime:
             "device": self.device,
             "task_id": "",
             "tracks": results,
+        }
+
+    def _run_yue2_generation(self, request: GenerationRequest) -> dict[str, object]:
+        if request.candidates > 1:
+            raise AstralPipelineError("Hermes YuE2 currently renders one candidate per request.")
+        if request.vocal_mode == "instrumental":
+            raise AstralPipelineError("Hermes YuE2 is a sung-song lane. Use MusicGen for instrumentals.")
+
+        composition = self._resolve_generation_composition(request)
+        prompt_text = str(composition["resolved_prompt"])
+        lyrics_text = str(composition["resolved_lyrics"]).strip()
+        resolved_title = str(composition["resolved_title"])
+        plan = dict(composition["plan"])
+        if not lyrics_text:
+            raise AstralPipelineError("Hermes YuE2 needs singable lyrics. Compose the song first or paste lyrics.")
+
+        session_seed = request.seed if request.seed is not None else random.randint(1, 2_147_483_647)
+        session_dir = self._create_session_dir(resolved_title)
+        output_path = session_dir / f"candidate-01-seed-{session_seed}.wav"
+        render_prompt_text = build_render_prompt_payload(request, plan, prompt_text)
+        manifest_path = session_dir / "manifest.json"
+        manifest = {
+            "status": "pending",
+            "title": resolved_title,
+            "timestamp": datetime.now().strftime("%Y%m%d-%H%M%S"),
+            "request": asdict(request),
+            "plan": plan,
+            "resolved_prompt": prompt_text,
+            "render_prompt": render_prompt_text,
+            "resolved_lyrics": lyrics_text,
+            "device": self.device,
+            "engine": YUE2_BACKEND,
+            "payload": {"model": "YuE2-3B", "remote": True, "audio_duration": request.duration},
+            "tracks": [],
+            "timeout_seconds": settings.yue2_timeout_seconds,
+            "error": "",
+        }
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        try:
+            record = yue2_remote_client.generate(
+                payload={
+                    "model": "YuE2-3B",
+                    "prompt": render_prompt_text,
+                    "lyrics": lyrics_text,
+                    "genre": request.genre,
+                    "mood": request.mood,
+                    "instruments": request.instruments,
+                    "language": request.vocal_language,
+                    "duration_seconds": request.duration,
+                    "seed": session_seed,
+                },
+                output_path=output_path,
+            )
+            ending = audio_tools.finalize_song_ending(output_path)
+        except YuE2RemoteError as exc:
+            manifest["status"] = "failed"
+            manifest["error"] = str(exc)
+            manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+            raise AstralPipelineError(str(exc)) from exc
+
+        track = {
+            "candidate": 1,
+            "seed": session_seed,
+            "label": "Hermes YuE2 full mix",
+            "role": "mixed",
+            "path": str(output_path),
+            "url": f"/outputs/{session_dir.name}/{output_path.name}",
+            "source_url": "",
+            "metas": {"model_id": "YuE2-3B", "remote": True, "ending_fade_out_seconds": ending["fade_out_seconds"]},
+        }
+        manifest["status"] = "completed"
+        manifest["completed_at"] = datetime.now().isoformat()
+        manifest["tracks"] = [track]
+        manifest["release_record"] = self._write_release_record(session_dir=session_dir, manifest=manifest, request=request, tracks=[track])
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        return {
+            "session_dir": str(session_dir),
+            "manifest_path": str(manifest_path),
+            "resolved_title": resolved_title,
+            "resolved_prompt": prompt_text,
+            "resolved_lyrics": lyrics_text,
+            "plan": plan,
+            "device": self.device,
+            "task_id": "",
+            "tracks": [track],
         }
 
     def _run_songgeneration_generation(self, request: GenerationRequest) -> dict[str, object]:

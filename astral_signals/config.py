@@ -133,6 +133,9 @@ DEFAULT_SONGGENERATION_USE_FLASH_ATTN = os.getenv(
     "false",
 ).strip().lower() in {"1", "true", "yes", "on"}
 DEFAULT_YUE_REPO = _env_path("ASTRAL_SIGNALS_YUE_REPO", DEFAULT_VENDOR_ROOT / "YuE")
+DEFAULT_YUE2_ENDPOINT = os.getenv("ASTRAL_SIGNALS_YUE2_ENDPOINT", "").strip().rstrip("/")
+DEFAULT_YUE2_TOKEN = os.getenv("ASTRAL_SIGNALS_YUE2_TOKEN", "").strip()
+DEFAULT_YUE2_TIMEOUT = int(os.getenv("ASTRAL_SIGNALS_YUE2_TIMEOUT", "3600"))
 DEFAULT_AUDIOCRAFT_REPO = _env_path("ASTRAL_SIGNALS_AUDIOCRAFT_REPO", DEFAULT_VENDOR_ROOT / "audiocraft")
 DEFAULT_STABLE_AUDIO_REPO = _env_path(
     "ASTRAL_SIGNALS_STABLE_AUDIO_REPO",
@@ -195,6 +198,9 @@ class Settings:
     songgeneration_low_mem: bool = DEFAULT_SONGGENERATION_LOW_MEM
     songgeneration_use_flash_attn: bool = DEFAULT_SONGGENERATION_USE_FLASH_ATTN
     yue_repo: Path = DEFAULT_YUE_REPO
+    yue2_endpoint: str = DEFAULT_YUE2_ENDPOINT
+    yue2_token: str = DEFAULT_YUE2_TOKEN
+    yue2_timeout_seconds: int = DEFAULT_YUE2_TIMEOUT
     audiocraft_repo: Path = DEFAULT_AUDIOCRAFT_REPO
     stable_audio_repo: Path = DEFAULT_STABLE_AUDIO_REPO
     soulx_repo: Path = DEFAULT_SOULX_REPO

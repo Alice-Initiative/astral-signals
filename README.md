@@ -19,6 +19,7 @@ Astral Signals is a local-first desktop song studio for Windows and Linux. It op
 - Preview voices before a full render
 - Split vocals and instrumentals, remix stems, and match lyrics to arrangement timing
 - Compare multiple render engines from one mapped prompt
+- Remote YuE2-3B full-song rendering through a Hermes/Modal endpoint, with no local GPU required
 
 Heavy assets default to a platform-local storage root, so large model downloads and audio outputs stay off your repo unless you override them.
 
@@ -128,6 +129,10 @@ If this machine does not have CUDA, Astral will still launch and automatically f
 - local editing tools like drafts, lyrics, arrangement, Mix Deck, and Stem Studio
 
 In CPU-only mode, `ACE-Step`, `SongGeneration`, and `HeartMuLa` stay visible in the catalog but are disabled with a `CUDA required` label.
+
+### Hermes YuE2 remote rendering
+
+The `codex/hermes-yue2` branch adds `YuE2-3B · Hermes Modal` as a remote song engine for Linux bots and CPU-only hosts. Configure `ASTRAL_SIGNALS_YUE2_ENDPOINT` and optionally `ASTRAL_SIGNALS_YUE2_TOKEN`, then select `yue2-modal::YuE2-3B`. See [docs/hermes-yue2.md](docs/hermes-yue2.md) for the endpoint contract.
 
 ## Remote agents and other machines
 
