@@ -408,7 +408,15 @@ class AceStepClient:
         requested_lm_model = str(payload.get("lm_model_path", "") or "").strip() or None
         self.ensure_server(requested_lm_model=requested_lm_model)
         self._ensure_queue_ready(requested_lm_model=requested_lm_model)
-        response = self._request_json("POST", "/release_task", payload, timeout=300)
+        # Long lyric jobs can take several minutes before ACE-Step returns the
+        # task id. Keep this request alive for the configured backend timeout
+        # instead of aborting at the old five-minute ceiling.
+        response = self._request_json(
+            "POST",
+            "/release_task",
+            payload,
+            timeout=max(300, settings.ace_step_server_timeout_seconds),
+        )
         data = response.get("data", {})
         task_id = str(data.get("task_id", "")).strip()
         if not task_id:
