@@ -19,6 +19,7 @@ Astral Signals is a local-first desktop song studio for Windows and Linux. It op
 - Preview voices before a full render
 - Split vocals and instrumentals, remix stems, and match lyrics to arrangement timing
 - Compare multiple render engines from one mapped prompt
+- Request long-form songs up to 60 minutes; the selected engine reports any smaller native limit
 - Remote YuE2-3B full-song rendering through a Hermes/Modal endpoint, with no local GPU required
 
 Heavy assets default to a platform-local storage root, so large model downloads and audio outputs stay off your repo unless you override them.

@@ -36,7 +36,9 @@ from astral_signals.voicebox import VoiceboxError, voicebox_client
 from astral_signals.yue2_remote import YuE2RemoteError, yue2_remote_client
 
 VocalMode = Literal["lyrics", "instrumental", "wordless"]
-MAX_DURATION_SECONDS = 240
+# The app accepts long-form requests; individual engines still advertise or
+# enforce their own practical limits when they cannot render that duration.
+MAX_DURATION_SECONDS = 3600
 MIN_DURATION_SECONDS = 10
 MAX_CANDIDATES = 2
 MAX_COMPOSE_VARIANTS = 4

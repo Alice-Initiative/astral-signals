@@ -67,7 +67,7 @@ class GeneratePayload(BaseModel):
     era: str = Field(default="", max_length=240)
     texture: str = Field(default="", max_length=400)
     title: str = Field(default="", max_length=200)
-    duration: int = Field(default=60, ge=10, le=240)
+    duration: int = Field(default=60, ge=10, le=3600)
     candidates: int = Field(default=1, ge=1, le=2)
     seed: int | None = Field(default=None, ge=1, le=2_147_483_647)
     guidance_scale: float = Field(default=1.0, ge=0.5, le=10.0)
