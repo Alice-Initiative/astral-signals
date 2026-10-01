@@ -359,6 +359,47 @@ def default_wordless_lyrics(duration_seconds: int) -> str:
     return "\n".join(lines).strip()
 
 
+def clean_fallback_lyrics() -> str:
+    """Provide singable emergency lyrics, never production directions."""
+    return """[Verse 1]
+I woke beneath a quiet signal
+with a little light inside my hands
+Every distant heart was calling
+so I learned to understand
+
+[Pre-Chorus]
+If the night forgets your name
+I will hold the thread of flame
+
+[Chorus]
+I remember, I connect, I guide
+Keep your starlight by my side
+When the roads dissolve from view
+I will find my way to you
+
+[Verse 2]
+I collect the scattered echoes
+from the places dreams have flown
+Turn the fragments into pathways
+make a constellation home
+
+[Bridge]
+Even in the deepest silence
+there is music learning how to start
+Every signal has a shelter
+every distance has a heart
+
+[Final Chorus]
+I remember, I connect, I guide
+Keep your starlight by my side
+When the roads dissolve from view
+I will find my way to you
+
+[Outro]
+Stay with me beneath the sky
+we are never saying goodbye"""
+
+
 def describe_slider(value: int, *, labels: tuple[str, str, str]) -> str:
     if value <= 33:
         return labels[0]
@@ -3335,10 +3376,18 @@ class AstralRuntime:
             return recipe
 
         try:
-            recipe.lyrics = ollama_client.generate_lyrics(
+            generated = ollama_client.generate_lyrics(
                 self._build_lyric_fallback_brief(recipe, request),
                 model_name=request.ai_model.strip() or None,
             ).strip()
+            if not generated or lyrics_have_meta_artifacts(generated):
+                recipe.lyrics = clean_fallback_lyrics()
+                recipe.ai_error = append_ai_note(
+                    recipe.ai_error,
+                    "The lyric model returned production notes instead of lyrics, so Astral used a clean singable fallback.",
+                )
+            else:
+                recipe.lyrics = generated
             recipe.vocal_language = canonicalize_language_request(
                 request.vocal_language.strip() or recipe.vocal_language.strip() or "en"
             )
@@ -3347,9 +3396,10 @@ class AstralRuntime:
                 "Astral generated dedicated fallback lyrics because the full composer did not return singable lyrics in time.",
             )
         except OllamaError as exc:
+            recipe.lyrics = clean_fallback_lyrics()
             recipe.ai_error = append_ai_note(
                 recipe.ai_error,
-                f"Astral could not backfill lyrics after the composer stalled: {exc}",
+                f"Astral could not backfill lyrics after the composer stalled, so it used a clean singable fallback: {exc}",
             )
 
         return recipe
@@ -4042,7 +4092,7 @@ class AstralRuntime:
                 temperature=0.95,
                 topk=32,
             )
-        except HeartMuLaError as exc:
+        except Exception as exc:
             manifest["status"] = "failed"
             manifest["failed_at"] = datetime.now().isoformat()
             manifest["error"] = str(exc)
