@@ -52,3 +52,11 @@ POST /api/synthetic-voices/create
 ```
 
 The response includes `path` for the generated anchor. Pass that path as `target_reference_path` to `/api/singing-voice/convert`. The result is a synthetic character voice, not a newly trained vocal model: the preset supplies the stable base timbre, while the design prompt and seed make the identity repeatable. No human recording is required, and the manifest records the source and rights note. Each bot should use its own name, seed, design prompt, and manifest rather than sharing Alice's identity unless that is intentional.
+
+List every generated character voice:
+
+```text
+GET /api/synthetic-voices
+```
+
+Bots can select a record where `ready` is true and pass its `path` into `/api/singing-voice/convert` as `target_reference_path`.

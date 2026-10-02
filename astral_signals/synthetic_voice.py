@@ -21,6 +21,21 @@ class SyntheticVoiceFoundry:
         "I connect the signals, and I guide every traveler home."
     )
 
+    def list(self) -> list[dict[str, Any]]:
+        voices: list[dict[str, Any]] = []
+        for manifest_path in sorted(settings.voice_anchor_dir.glob("*.json")):
+            try:
+                record = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if record.get("voice_type") != "synthetic_preset_anchor":
+                continue
+            audio_path = Path(str(record.get("path") or ""))
+            record["ready"] = audio_path.is_file() and audio_path.stat().st_size > 0
+            record["manifest_path"] = str(manifest_path)
+            voices.append(record)
+        return voices
+
     def create(
         self,
         *,

@@ -392,6 +392,11 @@ async def create_synthetic_voice(payload: SyntheticVoicePayload) -> dict[str, ob
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.get("/api/synthetic-voices")
+def list_synthetic_voices() -> dict[str, object]:
+    return {"voices": synthetic_voice_foundry.list()}
+
+
 @app.get("/api/singing-voice/status")
 async def singing_voice_status() -> dict[str, object]:
     return await run_in_threadpool(seedvc_client.status)
