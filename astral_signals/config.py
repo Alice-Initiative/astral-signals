@@ -146,6 +146,9 @@ DEFAULT_DIFFSINGER_REPO = _env_path("ASTRAL_SIGNALS_DIFFSINGER_REPO", DEFAULT_VE
 DEFAULT_VOICE_CLONE_ANCHOR_STRENGTH = float(
     os.getenv("ASTRAL_SIGNALS_VOICE_CLONE_ANCHOR_STRENGTH", "0.18")
 )
+DEFAULT_SEEDVC_REPO = _env_path("ASTRAL_SIGNALS_SEEDVC_REPO", DEFAULT_VENDOR_ROOT / "seed-vc")
+DEFAULT_SEEDVC_VENV = _env_path("ASTRAL_SIGNALS_SEEDVC_VENV", DEFAULT_SEEDVC_REPO / ".venv")
+DEFAULT_SEEDVC_TIMEOUT = int(os.getenv("ASTRAL_SIGNALS_SEEDVC_TIMEOUT", "1800"))
 
 
 @dataclass(frozen=True)
@@ -207,6 +210,9 @@ class Settings:
     diffsinger_repo: Path = DEFAULT_DIFFSINGER_REPO
     voice_anchor_dir: Path = DEFAULT_STORAGE_ROOT / "voice-anchors"
     voice_clone_anchor_strength: float = DEFAULT_VOICE_CLONE_ANCHOR_STRENGTH
+    seedvc_repo: Path = DEFAULT_SEEDVC_REPO
+    seedvc_venv: Path = DEFAULT_SEEDVC_VENV
+    seedvc_timeout_seconds: int = DEFAULT_SEEDVC_TIMEOUT
 
 
 settings = Settings()

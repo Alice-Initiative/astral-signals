@@ -13,8 +13,9 @@ from starlette.concurrency import run_in_threadpool
 from astral_signals.config import settings
 from astral_signals.drafts import draft_store
 from astral_signals.audio_tools import AudioToolsError, audio_tools
-from astral_signals.pipeline import AstralPipelineError, GenerationRequest, runtime
+from astral_signals.pipeline import AstralPipelineError, GenerationRequest, runtime, slugify
 from astral_signals.voicebox import VoiceboxError
+from astral_signals.seedvc import SeedVCError, seedvc_client
 
 
 class SingerPayload(BaseModel):
@@ -185,6 +186,14 @@ class VoiceClonePreviewPayload(BaseModel):
     title: str = Field(default="", max_length=200)
 
 
+class SingingVoiceConvertPayload(BaseModel):
+    source_path: str = Field(min_length=3, max_length=4000)
+    target_reference_path: str = Field(min_length=3, max_length=4000)
+    title: str = Field(default="Alice singing conversion", max_length=200)
+    diffusion_steps: int = Field(default=40, ge=4, le=80)
+    semitone_shift: int = Field(default=0, ge=-24, le=24)
+
+
 app = FastAPI(title="Astral Signals")
 app.mount("/static", StaticFiles(directory=settings.static_dir), name="static")
 app.mount("/outputs", StaticFiles(directory=settings.output_dir), name="outputs")
@@ -348,6 +357,31 @@ async def preview_cloned_voice(payload: VoiceClonePreviewPayload) -> dict[str, o
             title=payload.title,
         )
     except VoiceboxError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/singing-voice/status")
+async def singing_voice_status() -> dict[str, object]:
+    return await run_in_threadpool(seedvc_client.status)
+
+
+@app.post("/api/singing-voice/convert")
+async def singing_voice_convert(payload: SingingVoiceConvertPayload) -> dict[str, object]:
+    try:
+        title = slugify(payload.title)
+        output_dir = settings.output_dir / "singing-voice-conversions"
+        output_path = output_dir / f"{title}.wav"
+        result = await run_in_threadpool(
+            seedvc_client.convert,
+            source_path=Path(payload.source_path).expanduser(),
+            target_reference_path=Path(payload.target_reference_path).expanduser(),
+            output_path=output_path,
+            diffusion_steps=payload.diffusion_steps,
+            semitone_shift=payload.semitone_shift,
+        )
+        result["url"] = f"/outputs/{output_dir.name}/{output_path.name}"
+        return result
+    except SeedVCError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
