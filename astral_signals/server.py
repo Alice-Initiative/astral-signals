@@ -211,6 +211,7 @@ class SingingVoiceConvertPayload(BaseModel):
 app = FastAPI(title="Astral Signals")
 app.mount("/static", StaticFiles(directory=settings.static_dir), name="static")
 app.mount("/outputs", StaticFiles(directory=settings.output_dir), name="outputs")
+app.mount("/voice-anchors", StaticFiles(directory=settings.voice_anchor_dir), name="voice-anchors")
 
 
 @app.middleware("http")

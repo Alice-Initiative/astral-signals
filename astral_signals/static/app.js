@@ -30,6 +30,9 @@ const refreshCloneProfilesButton = byId("refreshCloneProfilesButton");
 const createCloneProfileButton = byId("createCloneProfileButton");
 const addCloneSampleButton = byId("addCloneSampleButton");
 const previewCloneButton = byId("previewCloneButton");
+const refreshSyntheticVoicesButton = byId("refreshSyntheticVoicesButton");
+const previewSyntheticVoiceButton = byId("previewSyntheticVoiceButton");
+const createSyntheticVoiceButton = byId("createSyntheticVoiceButton");
 const railComposeButton = byId("railComposeButton");
 const railCompareButton = byId("railCompareButton");
 const railGenerateButton = byId("railGenerateButton");
@@ -45,6 +48,8 @@ const mixResults = byId("mixResults");
 const alignmentResults = byId("alignmentResults");
 const voicePreviewResults = byId("voicePreviewResults");
 const cloneResults = byId("cloneResults");
+const syntheticVoiceResults = byId("syntheticVoiceResults");
+const syntheticVoiceMeta = byId("syntheticVoiceMeta");
 const aliceLabResults = byId("aliceLabResults");
 const resolvedPrompt = byId("resolvedPrompt");
 const resolvedLyrics = byId("resolvedLyrics");
@@ -5617,6 +5622,68 @@ async function previewVoiceClone() {
   setStatus(`Clone speech preview ready for ${data.profile?.name || "the selected profile"}.`);
 }
 
+let syntheticVoices = [];
+
+function renderSyntheticVoiceResult(voice, message = "Synthetic voice ready.") {
+  if (!syntheticVoiceResults || !voice) return;
+  const fileName = String(voice.path || "").split(/[\\/]/).pop();
+  const audioUrl = fileName ? `/voice-anchors/${encodeURIComponent(fileName)}` : "";
+  syntheticVoiceResults.innerHTML = `
+    <article class="result-card">
+      <p class="section-tag">${escapeHtml(message)}</p>
+      <h3>${escapeHtml(voice.name || "Synthetic voice")}</h3>
+      <p class="result-meta">${escapeHtml(voice.preset_voice_id || "preset")} · seed ${escapeHtml(String(voice.seed ?? ""))} · ${escapeHtml(voice.language || "en")}</p>
+      ${audioUrl ? `<audio controls preload="none" src="${audioUrl}"></audio>` : ""}
+      <p class="path-row">${escapeHtml(voice.path || "")}</p>
+      <p class="microcopy">${escapeHtml(voice.design_prompt || "")}</p>
+    </article>`;
+  if (syntheticVoiceMeta) syntheticVoiceMeta.textContent = `${voice.name || "Synthetic voice"} selected · ${voice.preset_voice_id || "preset"}`;
+}
+
+function populateSyntheticVoices(voices = []) {
+  syntheticVoices = voices.filter((voice) => voice.ready !== false);
+  const select = byId("synthetic_voice_id");
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = `<option value="">Select a saved character voice</option>`;
+  syntheticVoices.forEach((voice) => {
+    const option = document.createElement("option");
+    option.value = voice.id || voice.path || "";
+    option.textContent = `${voice.name || "Synthetic voice"} · ${voice.preset_voice_id || "preset"}`;
+    select.appendChild(option);
+  });
+  if (current && syntheticVoices.some((voice) => (voice.id || voice.path) === current)) select.value = current;
+}
+
+async function loadSyntheticVoices() {
+  const data = await fetchJson("/api/synthetic-voices");
+  populateSyntheticVoices(data.voices || []);
+  return syntheticVoices;
+}
+
+function selectedSyntheticVoice() {
+  const value = byId("synthetic_voice_id")?.value || "";
+  return syntheticVoices.find((voice) => (voice.id || voice.path) === value) || null;
+}
+
+async function createSyntheticVoice() {
+  const payload = {
+    name: byId("synthetic_voice_name").value.trim() || "Synthetic Character",
+    design_prompt: byId("synthetic_voice_design").value.trim() || "Warm, clear, curious, luminous, emotionally present",
+    seed: Number(byId("synthetic_voice_seed").value || 2718),
+    language: byId("vocal_language").value.trim() || "en",
+  };
+  const data = await fetchJson("/api/synthetic-voices/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  await loadSyntheticVoices();
+  byId("synthetic_voice_id").value = data.id || "";
+  renderSyntheticVoiceResult(data, data.cached ? "Synthetic voice reused." : "Synthetic voice created.");
+  setStatus(`${data.name || "Synthetic voice"} is ready.`);
+}
+
 async function previewAliceVoicebox() {
   const payload = readPayload();
   if (!payload.voicebox_profile_id && !payload.voice_clone_profile_id) {
@@ -6288,6 +6355,35 @@ previewCloneButton.addEventListener("click", async () => {
     setStatus("Clone speech preview failed.");
   } finally {
     previewCloneButton.disabled = false;
+  }
+});
+refreshSyntheticVoicesButton?.addEventListener("click", async () => {
+  try {
+    await loadSyntheticVoices();
+    setStatus("Synthetic voice bank refreshed.");
+  } catch (error) {
+    showError(syntheticVoiceResults, error.message || "Could not load synthetic voices.");
+  }
+});
+byId("synthetic_voice_id")?.addEventListener("change", () => {
+  const voice = selectedSyntheticVoice();
+  if (voice) renderSyntheticVoiceResult(voice);
+});
+previewSyntheticVoiceButton?.addEventListener("click", () => {
+  const voice = selectedSyntheticVoice();
+  if (!voice) return showError(syntheticVoiceResults, "Choose a synthetic voice first.");
+  renderSyntheticVoiceResult(voice, "Synthetic voice preview.");
+});
+createSyntheticVoiceButton?.addEventListener("click", async () => {
+  createSyntheticVoiceButton.disabled = true;
+  setStatus("Creating synthetic character voice...");
+  try {
+    await createSyntheticVoice();
+  } catch (error) {
+    showError(syntheticVoiceResults, error.message || "Synthetic voice creation failed.");
+    setStatus("Synthetic voice creation failed.");
+  } finally {
+    createSyntheticVoiceButton.disabled = false;
   }
 });
 previewAliceVoiceboxButton?.addEventListener("click", async () => {
@@ -7179,6 +7275,7 @@ updateComposeButtonLabel();
 loadVoiceCloneProfiles().catch((error) => {
   cloneProfileMeta.textContent = error.message || "Voice clone profiles unavailable.";
 });
+loadSyntheticVoices().catch(() => {});
 renderMixDeck();
 renderArrangementDeck();
 renderInstrumentDeck();

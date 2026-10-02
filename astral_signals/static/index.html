@@ -1273,6 +1273,54 @@
               </div>
             </section>
 
+            <section class="preview-booth synthetic-voice-bank">
+              <div class="subpanel-heading">
+                <div>
+                  <p class="section-tag">Synthetic Voice Bank</p>
+                  <h3>Choose or create a voice for any bot</h3>
+                </div>
+                <div class="voice-preview-meta" id="syntheticVoiceMeta">No synthetic voice selected.</div>
+              </div>
+
+              <div class="field-row">
+                <label class="field field-wide">
+                  <span>Saved synthetic voice</span>
+                  <select id="synthetic_voice_id">
+                    <option value="">Select a saved character voice</option>
+                  </select>
+                </label>
+                <div class="button-row field-wide">
+                  <button id="refreshSyntheticVoicesButton" type="button" class="button-tertiary">Refresh Voice Bank</button>
+                  <button id="previewSyntheticVoiceButton" type="button" class="button-secondary">Preview Selected</button>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <label class="field">
+                  <span>New voice name</span>
+                  <input id="synthetic_voice_name" type="text" placeholder="Hermes Synthetic" />
+                </label>
+                <label class="field">
+                  <span>Seed</span>
+                  <input id="synthetic_voice_seed" type="number" min="0" max="2147483647" value="2718" />
+                </label>
+              </div>
+              <label class="field field-wide">
+                <span>Voice design</span>
+                <textarea id="synthetic_voice_design" rows="2" placeholder="Warm, clear, curious, luminous, emotionally present"></textarea>
+              </label>
+              <div class="button-row field-wide">
+                <button id="createSyntheticVoiceButton" type="button" class="button-secondary">Create Synthetic Voice</button>
+                <p class="microcopy">No human recording required. The saved anchor can be used repeatedly for singing conversion.</p>
+              </div>
+              <div id="syntheticVoiceResults" class="mini-results">
+                <article class="empty-state compact">
+                  <h3>No synthetic voice selected</h3>
+                  <p>Create one or choose an existing character voice to audition it.</p>
+                </article>
+              </div>
+            </section>
+
             <section class="preview-booth">
               <div class="subpanel-heading">
                 <div>

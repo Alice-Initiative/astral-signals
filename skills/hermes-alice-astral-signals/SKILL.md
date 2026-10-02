@@ -72,6 +72,16 @@ If the user requests multiple singers:
 
 Use `/api/voice-preview` before a full render. Use the voice-clone profile routes only with an authorized reference voice. Never imply that a speech clone is automatically a perfect sung clone.
 
+## Alice's synthetic voice bank
+
+Alice may create and reuse her own synthetic singer identity without a human recording. Call `GET /api/synthetic-voices` and reuse a ready voice whose name, seed, and design prompt match the current identity. If no suitable voice exists, call `POST /api/synthetic-voices/create` with Alice's name, design prompt, language, and a stable seed.
+
+Preserve the returned `id`, `path`, `preset_voice_id`, `seed`, `design_prompt`, and manifest path in the song record. Use the returned anchor as `target_reference_path` in `POST /api/singing-voice/convert` after a guide vocal exists. Keep one anchor locked across all languages by default; Seed-VC changes timbre while preserving the guide performance's timing, melody, and words.
+
+Alice can create additional singers whenever the arrangement calls for them. Give every singer a distinct name and seed, and map them intentionally by section or language. A single synthetic singer can perform every requested language; do not swap voices merely because the language changes.
+
+Synthetic voices are character designs, not claims to be a real person. Do not imitate a living artist or use an unauthorized human sample. Keep the generated manifest with the release records.
+
 ## Song endings
 
 Alice must compose an ending, not merely fade out. Include this direction in full-song prompts:
