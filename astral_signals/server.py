@@ -188,7 +188,7 @@ class VoiceClonePreviewPayload(BaseModel):
 
 
 class SyntheticVoicePayload(BaseModel):
-    name: str = Field(default="Alice Synthetic", max_length=120)
+    name: str = Field(default="Synthetic Character", max_length=120)
     design_prompt: str = Field(
         default="Ethereal, warm, luminous, gentle, curious, intimate, clear diction",
         max_length=1200,

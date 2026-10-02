@@ -24,7 +24,7 @@ class SyntheticVoiceFoundry:
     def create(
         self,
         *,
-        name: str = "Alice Synthetic",
+        name: str = "Synthetic Character",
         design_prompt: str = "Ethereal, warm, luminous, gentle, curious, intimate, clear diction",
         language: str = "en",
         seed: int = 2718,
@@ -32,7 +32,7 @@ class SyntheticVoiceFoundry:
         engine: str = "qwen_custom_voice",
         text: str = "",
     ) -> dict[str, Any]:
-        name = name.strip() or "Alice Synthetic"
+        name = name.strip() or "Synthetic Character"
         design_prompt = design_prompt.strip() or "Ethereal, warm, luminous, gentle, curious, intimate, clear diction"
         language = language.strip().lower() or "en"
         text = text.strip() or self.anchor_text
