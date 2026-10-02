@@ -16,6 +16,7 @@ from astral_signals.audio_tools import AudioToolsError, audio_tools
 from astral_signals.pipeline import AstralPipelineError, GenerationRequest, runtime, slugify
 from astral_signals.voicebox import VoiceboxError
 from astral_signals.seedvc import SeedVCError, seedvc_client
+from astral_signals.synthetic_voice import SyntheticVoiceError, synthetic_voice_foundry
 
 
 class SingerPayload(BaseModel):
@@ -184,6 +185,19 @@ class VoiceClonePreviewPayload(BaseModel):
     language: str = Field(default="en", max_length=40)
     engine: str = Field(default="", max_length=60)
     title: str = Field(default="", max_length=200)
+
+
+class SyntheticVoicePayload(BaseModel):
+    name: str = Field(default="Alice Synthetic", max_length=120)
+    design_prompt: str = Field(
+        default="Ethereal, warm, luminous, gentle, curious, intimate, clear diction",
+        max_length=1200,
+    )
+    language: str = Field(default="en", max_length=40)
+    seed: int = Field(default=2718, ge=0, le=2_147_483_647)
+    preset_voice_id: str = Field(default="", max_length=120)
+    engine: str = Field(default="qwen_custom_voice", max_length=80)
+    text: str = Field(default="", max_length=1000)
 
 
 class SingingVoiceConvertPayload(BaseModel):
@@ -357,6 +371,24 @@ async def preview_cloned_voice(payload: VoiceClonePreviewPayload) -> dict[str, o
             title=payload.title,
         )
     except VoiceboxError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/synthetic-voices/create")
+async def create_synthetic_voice(payload: SyntheticVoicePayload) -> dict[str, object]:
+    """Create or reuse a non-cloned voice anchor for Alice or another character."""
+    try:
+        return await run_in_threadpool(
+            synthetic_voice_foundry.create,
+            name=payload.name,
+            design_prompt=payload.design_prompt,
+            language=payload.language,
+            seed=payload.seed,
+            preset_voice_id=payload.preset_voice_id,
+            engine=payload.engine,
+            text=payload.text,
+        )
+    except SyntheticVoiceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 

@@ -32,3 +32,23 @@ POST /api/singing-voice/convert
 Alice can automate the workflow by generating a guide vocal first, selecting an authorized Voicebox reference or voice anchor, converting the guide vocal, and mixing the returned vocal stem with the instrumental.
 
 Voicebox remains the profile, preview, and reference-voice layer. It does not itself provide the word-locked singing performance. Do not use a person's voice reference without permission.
+
+## Synthetic Alice voice, no recording required
+
+Alice can create a reproducible synthetic identity without a human voice sample. Astral Signals selects a local Voicebox preset speaker, applies Alice's design prompt, renders a short anchor passage, and saves the anchor plus a JSON manifest under:
+
+```text
+S:\AstralSignals\voice-anchors
+```
+
+```json
+POST /api/synthetic-voices/create
+{
+  "name": "Alice Synthetic",
+  "design_prompt": "Ethereal, warm, luminous, gentle, curious, intimate, clear diction",
+  "language": "en",
+  "seed": 2718
+}
+```
+
+The response includes `path` for the generated anchor. Pass that path as `target_reference_path` to `/api/singing-voice/convert`. The result is a synthetic character voice, not a newly trained vocal model: the preset supplies the stable base timbre, while the design prompt and seed make the identity repeatable. No human recording is required, and the manifest records the source and rights note.

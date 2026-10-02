@@ -178,6 +178,10 @@ class VoiceboxClient:
             raise VoiceboxError(f"Voicebox returned an invalid profile payload for {profile_id}.")
         return payload
 
+    def delete_profile(self, profile_id: str) -> None:
+        self.ensure_server()
+        self._request_json("DELETE", f"/profiles/{profile_id}", timeout=20)
+
     def create_profile(
         self,
         *,
@@ -203,6 +207,44 @@ class VoiceboxClient:
         )
         if not isinstance(payload, dict):
             raise VoiceboxError("Voicebox returned an invalid profile creation response.")
+        return payload
+
+    def list_preset_voices(self, engine: str = "qwen_custom_voice") -> list[dict[str, Any]]:
+        """Return local preset speakers that need no reference recording."""
+        self.ensure_server()
+        payload = self._request_json("GET", f"/profiles/presets/{engine}", timeout=20)
+        voices = payload.get("voices", []) if isinstance(payload, dict) else []
+        return voices if isinstance(voices, list) else []
+
+    def create_preset_profile(
+        self,
+        *,
+        name: str,
+        description: str,
+        language: str,
+        engine: str,
+        voice_id: str,
+        personality: str = "",
+    ) -> dict[str, Any]:
+        """Create a Voicebox profile backed by a built-in synthetic speaker."""
+        self.ensure_server()
+        payload = self._request_json(
+            "POST",
+            "/profiles",
+            payload={
+                "name": name,
+                "description": description or None,
+                "language": language or "en",
+                "voice_type": "preset",
+                "preset_engine": engine,
+                "preset_voice_id": voice_id,
+                "default_engine": engine,
+                "personality": personality or None,
+            },
+            timeout=20,
+        )
+        if not isinstance(payload, dict):
+            raise VoiceboxError("Voicebox returned an invalid preset profile response.")
         return payload
 
     def add_profile_sample(
@@ -263,6 +305,7 @@ class VoiceboxClient:
         text: str,
         language: str = "en",
         engine: str = "",
+        instruct: str = "",
         timeout: int = 600,
     ) -> tuple[bytes, str]:
         self.ensure_server()
@@ -274,6 +317,7 @@ class VoiceboxClient:
                 "text": text,
                 "language": language or "en",
                 **({"engine": engine} if engine else {}),
+                **({"instruct": instruct} if instruct else {}),
             },
             timeout=30,
         )
