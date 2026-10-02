@@ -70,14 +70,20 @@ class SyntheticVoiceFoundry:
             if not selected_id:
                 raise SyntheticVoiceError("Voicebox returned a preset speaker without an id.")
 
-            profile = voicebox_client.create_preset_profile(
-                name=f"{name} [{identity}]",
-                description="Synthetic Astral Signals character voice; no human reference recording used.",
-                language=language,
-                engine=engine,
-                voice_id=selected_id,
-                personality=design_prompt,
+            profile_name = f"{name} [{identity}]"
+            profile = next(
+                (item for item in voicebox_client.list_profiles() if item.get("name") == profile_name),
+                None,
             )
+            if profile is None:
+                profile = voicebox_client.create_preset_profile(
+                    name=profile_name,
+                    description="Synthetic Astral Signals character voice; no human reference recording used.",
+                    language=language,
+                    engine=engine,
+                    voice_id=selected_id,
+                    personality=design_prompt,
+                )
             profile_id = str(profile.get("id", ""))
             audio_bytes, content_type = voicebox_client.generate_preview(
                 profile_id=profile_id,
